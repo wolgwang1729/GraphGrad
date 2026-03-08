@@ -207,6 +207,40 @@ function makeNodeId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+function getInputLabelSubscript(label: string): number | null {
+  const match = label.trim().match(/_(?:\{\s*(-?\d+)\s*\}|(-?\d+))$/);
+  const rawValue = match?.[1] ?? match?.[2];
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const subscript = Number.parseInt(rawValue, 10);
+  return Number.isNaN(subscript) ? null : subscript;
+}
+
+function getNextInputLabel(nodes: EditorNode[]): string {
+  const usedSubscripts = new Set<number>();
+
+  nodes.forEach((node) => {
+    if (node.data.kind !== "input") {
+      return;
+    }
+
+    const subscript = getInputLabelSubscript(node.data.label);
+    if (subscript !== null && subscript > 0) {
+      usedSubscripts.add(subscript);
+    }
+  });
+
+  let nextSubscript = 1;
+  while (usedSubscripts.has(nextSubscript)) {
+    nextSubscript += 1;
+  }
+
+  return `x_{${nextSubscript}}`;
+}
+
 function getDefaultPosition(index: number) {
   return {
     x: 40 + (index % 3) * 160,
@@ -1026,7 +1060,7 @@ function VisualizerCanvas() {
                 position,
                 data: {
                   kind,
-                  label: `x_${base.length + 1}`,
+                  label: getNextInputLabel(base),
                   value: 0,
                   resultValue: null,
                   grad: null,
@@ -1337,6 +1371,9 @@ function VisualizerCanvas() {
               </div>
             </div>
             <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Click a node to edit its properties inline.
+            </p>
+            <p className={`mt-1 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                 Drag from the end handle of one node to another node to create an edge.
             </p>
 
@@ -1383,9 +1420,6 @@ function VisualizerCanvas() {
                   <span>Gradient (below edge)</span>
                 </div>
               </div>
-              <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Click a node to edit its properties inline.
-              </p>
             </div>
           </div>
         </div>
