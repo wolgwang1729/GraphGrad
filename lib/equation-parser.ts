@@ -14,10 +14,11 @@ const OPERATION_MAP: Record<string, SupportedOperation> = {
   subtract: "sub",
   divide: "div",
   pow: "pow",
-  unaryMinus: "neg",
+  unaryminus: "neg",
   // Function names
   max: "max",
   ln: "log", // mathjs parses 'ln' as the function 'ln', map it to our internal 'log' op
+  log: "log",
   exp: "exp",
   // Mathjs doesn't have relu, sigmoid, tanh built-in or named exactly this way usually,
   // but if they type it as a function like `relu(x)` we can map it.
@@ -29,20 +30,18 @@ const OPERATION_MAP: Record<string, SupportedOperation> = {
 export function parseEquationToGraph(
   equation: string
 ): { nodes: GraphNodeSpec[]; edges: GraphEdgeSpec[] } {
+  let idCounter = 1;
+  const generateId = (prefix: string) => `${prefix}-${idCounter++}`;
+
   const nodes: GraphNodeSpec[] = [];
   const edges: GraphEdgeSpec[] = [];
 
-  // Sanitize the equation string to use standard ASCII operators
   const sanitizedEquation = equation
     .replace(/[∗×]/g, "*")
     .replace(/−/g, "-")
     .replace(/÷/g, "/");
 
-  // Parse the equation into an AST
   const node = math.parse(sanitizedEquation);
-
-  let idCounter = 1;
-  const generateId = (prefix: string) => `${prefix}-${idCounter++}`;
 
   const inputNodesMap = new Map<string, string>(); // symName/val -> nodeId
 
