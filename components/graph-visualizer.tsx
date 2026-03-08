@@ -100,6 +100,7 @@ const DEFAULT_STATUS: StatusState = {
 };
 
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
+const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4" };
 const FIT_VIEW_PADDING = 0.2;
 const SIDEBAR_RESERVED_WIDTH_PX = 430;
 const SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX = 0;
@@ -1025,7 +1026,7 @@ function VisualizerCanvas() {
                 position,
                 data: {
                   kind,
-                  label: `x${base.length + 1}`,
+                  label: `x_${base.length + 1}`,
                   value: 0,
                   resultValue: null,
                   grad: null,
@@ -1038,7 +1039,7 @@ function VisualizerCanvas() {
                   position,
                   data: {
                     kind,
-                    label: `op${base.length + 1}`,
+                    label: "",
                     op: DEFAULT_OPERATION,
                     resultValue: null,
                     grad: null,
@@ -1050,7 +1051,7 @@ function VisualizerCanvas() {
                   position,
                   data: {
                     kind,
-                    label: "output",
+                    label: "\\text{out}",
                     resultValue: null,
                     grad: null,
                   },
@@ -1197,6 +1198,7 @@ function VisualizerCanvas() {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitViewOptions={fitViewConfig}
+            connectionLineStyle={DRAGGING_EDGE_STYLE}
             deleteKeyCode={isLocked ? [] : ["Backspace", "Delete"]}
             proOptions={{ hideAttribution: true }}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
@@ -1319,15 +1321,24 @@ function VisualizerCanvas() {
                 >
                   + Op
                 </button>
-                <button
-                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent disabled:opacity-50 ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
-                  onClick={() => addNode("output")}
-                  disabled={hasOutputNode}
+                <span
+                  className="w-full"
+                  title={hasOutputNode ? "There can be only one out node." : "Add an output node."}
                 >
-                  + Out
-                </button>
+                  <button
+                    className={`w-full rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                    onClick={() => addNode("output")}
+                    disabled={hasOutputNode}
+                    aria-label={hasOutputNode ? "There can be only one out node" : "Add an output node"}
+                  >
+                    + Out
+                  </button>
+                </span>
               </div>
             </div>
+            <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Drag from the end handle of one node to another node to create an edge.
+            </p>
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
@@ -1355,6 +1366,7 @@ function VisualizerCanvas() {
                 </button>
               </div>
             </div>
+            
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
