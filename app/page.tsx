@@ -1,5 +1,5 @@
-import GraphPractice from "@/components/graph-practice";
+import GraphVisualizer from "@/components/graph-visualizer";
 
 export default function Home() {
-  return <GraphPractice />;
+  return <GraphVisualizer />;
 }

@@ -1,11 +1,11 @@
-import type { PracticeExample } from "@/lib/graph-types";
+import type { ComputationExample } from "@/lib/graph-types";
 
-export const PRACTICE_EXAMPLES: PracticeExample[] = [
+export const COMPUTATION_EXAMPLES: ComputationExample[] = [
   {
     id: "mul-after-add",
     title: "Multiply after add",
     description:
-      String.raw`A classic micrograd example:$$f(x,y,z) = (x+y)z$$ Run backprop and see the gradients on the edges.`,
+      String.raw`A classic example:$$f(x,y,z) = (x+y)z$$ Run backprop and see the gradients on the edges.`,
     nodes: [
       { id: "x", kind: "input", label: "x", value: -2, position: { x: 0, y: 0 } },
       { id: "y", kind: "input", label: "y", value: 5, position: { x: 0, y: 100 } },

@@ -42,7 +42,7 @@ import {
 import "katex/dist/katex.min.css";
 import { InlineMath } from "react-katex";
 
-import { PRACTICE_EXAMPLES } from "@/lib/examples";
+import { COMPUTATION_EXAMPLES } from "@/lib/examples";
 import { evaluateGraph, type EvaluationMode } from "@/lib/graph-evaluator";
 import {
   getOperationArity,
@@ -50,7 +50,7 @@ import {
   type GraphEdgeSpec,
   type GraphNodeKind,
   type GraphNodeSpec,
-  type PracticeExample,
+  type ComputationExample,
   type SupportedOperation,
 } from "@/lib/graph-types";
 
@@ -755,18 +755,18 @@ const nodeTypes: NodeTypes = {
 
 /* ─── Graph Canvas ─── */
 
-function PracticeCanvas() {
+function VisualizerCanvas() {
   const { fitView, getNodesBounds, setViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorNode>(
-    PRACTICE_EXAMPLES[0].nodes.map(toEditorNode),
+    COMPUTATION_EXAMPLES[0].nodes.map(toEditorNode),
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<EditorEdge>(
-    PRACTICE_EXAMPLES[0].edges.map(toEditorEdge),
+    COMPUTATION_EXAMPLES[0].edges.map(toEditorEdge),
   );
-  const [selectedExampleId, setSelectedExampleId] = useState(PRACTICE_EXAMPLES[0].id);
+  const [selectedExampleId, setSelectedExampleId] = useState(COMPUTATION_EXAMPLES[0].id);
   const [status, setStatus] = useState<StatusState>({
     tone: "info",
-    text: PRACTICE_EXAMPLES[0].description,
+    text: COMPUTATION_EXAMPLES[0].description,
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -777,7 +777,7 @@ function PracticeCanvas() {
       padding: FIT_VIEW_PADDING,
       minZoom: 0.35,
       maxZoom: 1.5,
-    }),
+      }),
     [],
   );
 
@@ -964,7 +964,7 @@ function PracticeCanvas() {
   );
 
   const loadExample = useCallback(
-    (example: PracticeExample) => {
+    (example: ComputationExample) => {
       setSelectedExampleId(example.id);
       setNodes(example.nodes.map(toEditorNode));
       setEdges(example.edges.map(toEditorEdge));
@@ -1172,8 +1172,8 @@ function PracticeCanvas() {
       JSON.stringify(
         {
           id: selectedExampleId,
-          title: PRACTICE_EXAMPLES.find(e => e.id === selectedExampleId)?.title || "",
-          description: PRACTICE_EXAMPLES.find(e => e.id === selectedExampleId)?.description || "",
+          title: COMPUTATION_EXAMPLES.find(e => e.id === selectedExampleId)?.title || "",
+          description: COMPUTATION_EXAMPLES.find(e => e.id === selectedExampleId)?.description || "",
           nodes: serializeNodes(nodes),
           edges: serializeEdges(edges),
         },
@@ -1289,11 +1289,11 @@ function PracticeCanvas() {
                 className={`w-full rounded border px-3 py-2 text-[15px] font-light outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
                 value={selectedExampleId}
                 onChange={(event) => {
-                  const next = PRACTICE_EXAMPLES.find((e) => e.id === event.target.value);
+                  const next = COMPUTATION_EXAMPLES.find((e) => e.id === event.target.value);
                   if (next) loadExample(next);
                 }}
               >
-                {PRACTICE_EXAMPLES.map((example) => (
+                {COMPUTATION_EXAMPLES.map((example) => (
                   <option key={example.id} value={example.id}>
                     {example.title}
                   </option>
@@ -1382,10 +1382,10 @@ function PracticeCanvas() {
   );
 }
 
-export default function GraphPractice() {
+export default function GraphVisualizer() {
   return (
     <ReactFlowProvider>
-      <PracticeCanvas />
+      <VisualizerCanvas />
     </ReactFlowProvider>
   );
 }

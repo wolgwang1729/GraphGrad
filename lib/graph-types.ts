@@ -51,7 +51,7 @@ export type GraphEdgeSpec = {
   targetHandle?: string | null;
 };
 
-export type PracticeExample = {
+export type ComputationExample = {
   id: string;
   title: string;
   description: string;
