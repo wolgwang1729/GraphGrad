@@ -539,7 +539,14 @@ const SmartNumberInput = memo(function SmartNumberInput({
   const [localText, setLocalText] = useState(value.toString());
 
   useEffect(() => {
-    const parsedLocal = parseFloat(localText);
+    let parsedLocal: number;
+    if (localText.includes('/')) {
+      const parts = localText.split('/');
+      parsedLocal = Number(parts[0]) / (parts[1] !== "" ? Number(parts[1]) : 1);
+    } else {
+      parsedLocal = Number(localText);
+    }
+
     if (parsedLocal !== value) {
       setLocalText(value.toString());
     }
@@ -547,13 +554,20 @@ const SmartNumberInput = memo(function SmartNumberInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
-    // Allow digits, decimal point, and leading minus
-    if (/^-?\d*\.?\d*$/.test(text) || text === "") {
+    // Allow digits, decimal point, leading minus, and an optional slash with more digits
+    if (/^-?\d*\.?\d*(\/\d*)?$/.test(text) || text === "") {
       setLocalText(text);
 
       // Only push to parent if it's a "complete" number string
-      if (text !== "" && text !== "-" && text !== "." && text !== "-." && !text.endsWith(".")) {
-        const num = Number(text);
+      if (text !== "" && text !== "-" && text !== "." && text !== "-." && !text.endsWith(".") && !text.endsWith("/")) {
+        let num: number;
+        if (text.includes('/')) {
+          const parts = text.split('/');
+          num = Number(parts[0]) / (parts[1] !== "" ? Number(parts[1]) : 1);
+        } else {
+          num = Number(text);
+        }
+
         if (!isNaN(num)) {
           onUpdate(num);
         }
@@ -567,14 +581,25 @@ const SmartNumberInput = memo(function SmartNumberInput({
       value={localText}
       onChange={handleChange}
       onBlur={() => {
-        const num = Number(localText);
+        let num: number;
+        if (localText.includes('/')) {
+          const parts = localText.split('/');
+          num = Number(parts[0]) / (parts[1] !== "" ? Number(parts[1]) : 1);
+        } else {
+          num = Number(localText);
+        }
+
         if (isNaN(num) || localText === "") {
           const fallback = 0;
           onUpdate(fallback);
           setLocalText(fallback.toString());
         } else {
           onUpdate(num);
-          setLocalText(num.toString()); // Normalize view (e.g., "-0" -> "0", "05" -> "5")
+          if (localText.includes('/')) {
+            setLocalText(localText);
+          } else {
+            setLocalText(num.toString()); // Normalize view (e.g., "-0" -> "0", "05" -> "5")
+          }
         }
       }}
     />
