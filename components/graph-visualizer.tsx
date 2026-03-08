@@ -1441,9 +1441,9 @@ function VisualizerCanvas() {
         </button>
 
         {/* NN-SVG Style Floating Sidebar */}
-        <div className={`absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border shadow-2xl transition-colors duration-300 ${isDarkMode ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+        <div className={`absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
           {/* Card Header */}
-          <div className={`border-b px-5 pt-4 pb-0 transition-colors duration-300 ${isDarkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-800 rounded-t"}`}>
+          <div className={`border-b px-5 pt-4 pb-0 transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
             <button 
               className={`float-right mt-1 text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
