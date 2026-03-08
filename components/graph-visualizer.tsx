@@ -45,6 +45,7 @@ import { InlineMath } from "react-katex";
 
 import { COMPUTATION_EXAMPLES } from "@/lib/examples";
 import { evaluateGraph, type EvaluationMode } from "@/lib/graph-evaluator";
+import { Logo } from "./logo";
 import {
   getOperationArity,
   OPERATION_LABELS,
@@ -479,6 +480,7 @@ function renderTextWithMath(text: string) {
   }
   return segments;
 }
+
 
 function ToneBanner({ status }: { status: StatusState }) {
   const { isDarkMode } = useGraphEditor();
@@ -1498,7 +1500,7 @@ function VisualizerCanvas() {
               <div className="grid grid-cols-3 gap-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
-                  onClick={() => addNode("input")}
+                   onClick={() => addNode("input")}
                 >
                   + Input
                 </button>
@@ -1556,7 +1558,6 @@ function VisualizerCanvas() {
                 </button>
               </div>
             </div>
-            
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
@@ -1575,6 +1576,18 @@ function VisualizerCanvas() {
               </div>
             </div>
           </div>
+
+          {/* Footer */}
+          {isSidebarOpen && (
+            <div className={`border-t px-5 py-2 text-center text-xs font-light transition-colors duration-300 flex items-center justify-center gap-2 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-slate-500" : "border-slate-200 bg-slate-100/50 text-slate-400 rounded-b"}`}>
+              <span>© 2026</span>
+              <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+                <Logo size={18} />
+                <span className="font-medium">wolgwang</span>
+              </div>
+              <span>. Built with ♥</span>
+            </div>
+          )}
         </div>
       </div>
     </GraphEditorContext.Provider>
