@@ -6,9 +6,9 @@ import {
   addEdge,
   Background,
   BaseEdge,
+  ControlButton,
   Controls,
   Handle,
-  MiniMap,
   NodeToolbar,
   type Connection,
   type Edge,
@@ -22,6 +22,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  getViewportForBounds,
   useEdgesState,
   useNodesData,
   useNodesState,
@@ -98,6 +99,9 @@ const DEFAULT_STATUS: StatusState = {
 };
 
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
+const FIT_VIEW_PADDING = 0.2;
+const SIDEBAR_RESERVED_WIDTH_PX = 430;
+const SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX = 0;
 
 const TOOLBAR_THRESHOLD_PX = 150;
 
@@ -305,7 +309,6 @@ function LabeledEdge({
   sourceY,
   targetX,
   targetY,
-  targetPosition,
   data,
   style,
 }: EdgeProps<Edge<LabeledEdgeData>>) {
@@ -662,7 +665,7 @@ const nodeTypes: NodeTypes = {
 /* ─── Graph Canvas ─── */
 
 function PracticeCanvas() {
-  const { fitView } = useReactFlow();
+  const { fitView, getNodesBounds, setViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorNode>(
     PRACTICE_EXAMPLES[0].nodes.map(toEditorNode),
   );
@@ -674,6 +677,63 @@ function PracticeCanvas() {
     tone: "info",
     text: PRACTICE_EXAMPLES[0].description,
   });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const fitViewConfig = useMemo(
+    () => ({
+      padding: FIT_VIEW_PADDING,
+      minZoom: 0.35,
+      maxZoom: 1.5,
+    }),
+    [],
+  );
+
+  const fitGraphToVisibleArea = useCallback(
+    (duration = 300) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const reservedWidth = isSidebarOpen
+        ? SIDEBAR_RESERVED_WIDTH_PX
+        : SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX;
+
+      if (nodes.length === 0) {
+        void fitView({ duration, ...fitViewConfig });
+        return;
+      }
+
+      const bounds = getNodesBounds(nodes);
+      const visibleWidth = Math.max(window.innerWidth - reservedWidth, 320);
+      const visibleHeight = Math.max(window.innerHeight - 20, 320);
+      const viewport = getViewportForBounds(
+        bounds,
+        visibleWidth,
+        visibleHeight,
+        fitViewConfig.minZoom,
+        fitViewConfig.maxZoom,
+        fitViewConfig.padding,
+      );
+
+      void setViewport(
+        {
+          x: viewport.x + reservedWidth,
+          y: viewport.y,
+          zoom: viewport.zoom,
+        },
+        { duration },
+      );
+    },
+    [fitView, fitViewConfig, getNodesBounds, isSidebarOpen, nodes, setViewport],
+  );
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        fitGraphToVisibleArea(300);
+      });
+    });
+  }, [fitGraphToVisibleArea, isSidebarOpen]);
 
   const resetComputedState = useCallback(
     (nextStatus = DEFAULT_STATUS) => {
@@ -816,10 +876,12 @@ function PracticeCanvas() {
       setEdges(example.edges.map(toEditorEdge));
       setStatus({ tone: "info", text: example.description });
       window.requestAnimationFrame(() => {
-        void fitView({ duration: 250, padding: 0.2 });
+        window.requestAnimationFrame(() => {
+          fitGraphToVisibleArea(250);
+        });
       });
     },
-    [fitView, setEdges, setNodes],
+    [fitGraphToVisibleArea, setEdges, setNodes],
   );
 
   const handleNodesChange = useCallback(
@@ -1029,115 +1091,9 @@ function PracticeCanvas() {
 
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
-      <div className="flex h-screen flex-col bg-slate-900 text-slate-100 lg:flex-row">
-        <aside className="w-full shrink-0 border-b border-white/5 bg-transparent p-6 lg:h-screen lg:w-80 lg:border-b-0 lg:border-r lg:overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700">
-          <div className="mb-6">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.28em] text-violet-300">
-              GraphGrad
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
-              Computation Graph Visualizer
-            </h1>
-          </div>
-
-          <div className="space-y-4">
-            <ToneBanner status={status} />
-
-            <section className="py-2">
-              <h2 className="mb-3 text-sm font-bold text-slate-200">Examples</h2>
-              <select
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-500"
-                value={selectedExampleId}
-                onChange={(event) => {
-                  const next = PRACTICE_EXAMPLES.find((example) => example.id === event.target.value);
-                  if (next) {
-                    loadExample(next);
-                  }
-                }}
-              >
-                {PRACTICE_EXAMPLES.map((example) => (
-                  <option key={example.id} value={example.id}>
-                    {example.title}
-                  </option>
-                ))}
-              </select>
-            </section>
-
-            <section className="py-2">
-              <h2 className="mb-3 text-sm font-bold text-slate-200">Build</h2>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-                  onClick={() => addNode("input")}
-                >
-                  + Input
-                </button>
-                <button
-                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
-                  onClick={() => addNode("operation")}
-                >
-                  + Op
-                </button>
-                <button
-                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-300"
-                  onClick={() => addNode("output")}
-                  disabled={hasOutputNode}
-                >
-                  + Out
-                </button>
-              </div>
-            </section>
-
-            <section className="py-2">
-              <h2 className="mb-3 text-sm font-bold text-slate-200">Run</h2>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
-                  onClick={() => runEvaluation("forward")}
-                >
-                  Forward
-                </button>
-                <button
-                  className="rounded-xl bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
-                  onClick={() => runEvaluation("backward")}
-                >
-                  Backprop
-                </button>
-                <button
-                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
-                  onClick={() => resetComputedState()}
-                >
-                  Clear
-                </button>
-              </div>
-              <button
-                className="mt-2 w-full rounded-xl border border-rose-900/50 bg-transparent px-3 py-2 text-sm font-medium text-rose-400 transition hover:bg-rose-950/50"
-                onClick={clearCanvas}
-              >
-                Clear Canvas
-              </button>
-            </section>
-
-            <section className="py-2 text-sm text-slate-300">
-              <h2 className="mb-2 text-sm font-bold text-slate-200">Legend</h2>
-              <div className="space-y-1 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block h-2 w-4 rounded" style={{ background: "#22c55e" }} />
-                  <span>Forward value (above edge)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-block h-2 w-4 rounded" style={{ background: "#ef4444" }} />
-                  <span>Gradient (below edge)</span>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-slate-400">
-                Click a node to edit its properties inline.
-              </p>
-            </section>
-          </div>
-        </aside>
-
-        <main className="relative flex-1 bg-slate-900">
+      <div className="relative h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-light">
+        {/* Main Canvas */}
+        <main className="absolute inset-0 bg-slate-900">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1146,24 +1102,152 @@ function PracticeCanvas() {
             onConnect={onConnect}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
+            fitViewOptions={fitViewConfig}
             deleteKeyCode={["Backspace", "Delete"]}
             proOptions={{ hideAttribution: true }}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             colorMode="dark"
+            className="h-full w-full"
           >
-            <MiniMap
-              pannable
-              zoomable
-              nodeStrokeWidth={2}
-              style={{ backgroundColor: "#0f172a" }}
-              maskColor="rgba(15, 23, 42, 0.7)"
-            />
-            <Controls />
+            <Controls position="bottom-right" showFitView={false}>
+              <ControlButton onClick={() => fitGraphToVisibleArea(250)} aria-label="Fit graph to screen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </ControlButton>
+            </Controls>
             <Background gap={20} size={1} color="rgba(148, 163, 184, 0.08)" />
           </ReactFlow>
         </main>
+
+        {/* NN-SVG Style Floating Sidebar */}
+        <div className="absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border border-slate-700 bg-slate-800 shadow-2xl">
+          {/* Card Header */}
+          <div className="border-b border-slate-700 bg-slate-800 px-5 pt-4 pb-0">
+            <button 
+              className="float-right mt-1 text-2xl text-slate-400 transition-transform hover:text-white"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{ transform: isSidebarOpen ? "rotate(0deg)" : "rotate(-180deg)" }}
+              aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+            <h1 className="mb-1 text-[2.5rem] font-thin leading-none tracking-wide text-white">
+              GraphGrad
+            </h1>
+            <p className="mb-4 text-[15px] font-light text-slate-300">
+              Computation Graph Visualizer. <a href="#" onClick={(e) => { e.preventDefault(); clearCanvas(); }} className="text-indigo-400 hover:text-indigo-300">Clear Canvas</a>
+            </p>
+
+            {/* Simulated Tabs matching NN-SVG Nav Tabs */}
+            <nav className="flex translate-y-px space-x-1 border-b border-slate-700">
+            </nav>
+          </div>
+
+          {/* Card Body */}
+          <div className={`overflow-y-auto p-5 transition-all [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600 ${isSidebarOpen ? "block" : "hidden"}`}>
+            
+            <ToneBanner status={status} />
+            <hr className="my-5 border-slate-700" />
+
+            {/* Architecture / Examples */}
+            <div>
+              <h4 className="mb-3 text-lg font-light text-slate-200">Architecture:</h4>
+              <select
+                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-[15px] font-light text-slate-100 outline-none focus:border-indigo-500"
+                value={selectedExampleId}
+                onChange={(event) => {
+                  const next = PRACTICE_EXAMPLES.find((e) => e.id === event.target.value);
+                  if (next) loadExample(next);
+                }}
+              >
+                {PRACTICE_EXAMPLES.map((example) => (
+                  <option key={example.id} value={example.id}>
+                    {example.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <hr className="my-5 border-slate-700" />
+
+            {/* Nodes / Build */}
+            <div>
+              <h4 className="mb-3 text-lg font-light text-slate-200">Nodes:</h4>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  onClick={() => addNode("input")}
+                >
+                  + Input
+                </button>
+                <button
+                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                  onClick={() => addNode("operation")}
+                >
+                  + Op
+                </button>
+                <button
+                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:opacity-50"
+                  onClick={() => addNode("output")}
+                  disabled={hasOutputNode}
+                >
+                  + Out
+                </button>
+              </div>
+            </div>
+
+            <hr className="my-5 border-slate-700" />
+
+            {/* Evaluation */}
+            <div>
+              <h4 className="mb-3 text-lg font-light text-slate-200">Evaluation:</h4>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  onClick={() => runEvaluation("forward")}
+                >
+                  Forward
+                </button>
+                <button
+                  className="rounded-sm bg-slate-700 px-3 py-1.5 text-[15px] text-slate-200 transition hover:bg-slate-600"
+                  onClick={() => runEvaluation("backward")}
+                >
+                  Backprop
+                </button>
+                <button
+                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                  onClick={() => resetComputedState()}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <hr className="my-5 border-slate-700" />
+
+            {/* Legend */}
+            <div>
+              <h4 className="mb-2 text-lg font-light text-slate-200">Style / Legend:</h4>
+              <div className="space-y-2 text-[15px] text-slate-300">
+                <div className="flex items-center gap-3">
+                  <span className="inline-block h-3 w-6 rounded-sm bg-[#22c55e]" />
+                  <span>Forward value (above edge)</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-block h-3 w-6 rounded-sm bg-[#ef4444]" />
+                  <span>Gradient (below edge)</span>
+                </div>
+              </div>
+              <p className="mt-4 text-[13px] text-slate-400">
+                Click a node to edit its properties inline.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </GraphEditorContext.Provider>
   );

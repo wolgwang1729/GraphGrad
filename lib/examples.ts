@@ -43,7 +43,7 @@ export const PRACTICE_EXAMPLES: PracticeExample[] = [
       { id: "c", kind: "input", label: "1", value: 1.00, position: { x: 762, y: 320 } },
       { id: "add3", kind: "operation", label: "", op: "add", position: { x: 901, y: 235 } },
       { id: "pow", kind: "operation", label: "", op: "pow", parameter: -1, position: { x: 1050, y: 236 } },
-      { id: "out", kind: "output", label: "\text{out}", position: { x: 1201, y: 236 } },
+      { id: "out", kind: "output", label: "\\text{out}", position: { x: 1201, y: 236 } },
     ],
     edges: [
       { id: "w0-mul1", source: "w0", target: "mul1", targetHandle: "a" },
