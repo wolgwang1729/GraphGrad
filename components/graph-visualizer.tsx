@@ -120,6 +120,7 @@ const OPERATION_MATH_LABELS: Record<SupportedOperation, string> = {
   exp: "\\exp",
   sigmoid: "\\sigma",
   max: "\\max",
+  log: "\\ln",
 };
 
 /**
@@ -838,7 +839,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
         >
           <InlineMath math={data.label} />
         </div>
-        <span style={(op === "relu" || op === "tanh" || op === "exp" || op === "max") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
+        <span style={(op === "relu" || op === "tanh" || op === "exp" || op === "max" || op === "log") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
       {arity === 1 ? (
         <Handle
           type="target"

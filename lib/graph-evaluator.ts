@@ -78,6 +78,8 @@ function applyOperation(node: OperationNodeSpec, inputs: Value[]): Value {
       return inputs[0].tanh();
     case "exp":
       return inputs[0].exp();
+    case "log":
+      return inputs[0].log();
     case "sigmoid":
       return inputs[0].sigmoid();
     default: {

@@ -9,7 +9,8 @@ export type SupportedOperation =
   | "tanh"
   | "exp"
   | "sigmoid"
-  | "max";
+  | "max"
+  | "log";
 
 export type GraphNodeKind = "input" | "operation" | "output";
 
@@ -66,6 +67,7 @@ export const UNARY_OPERATIONS: SupportedOperation[] = [
   "tanh",
   "exp",
   "sigmoid",
+  "log",
 ];
 
 export const BINARY_OPERATIONS: SupportedOperation[] = ["add", "mul", "sub", "div", "max"];
@@ -82,6 +84,7 @@ export const OPERATION_LABELS: Record<SupportedOperation, string> = {
   exp: "exp",
   sigmoid: "sigmoid",
   max: "max",
+  log: "log",
 };
 
 export function isUnaryOperation(op: SupportedOperation): boolean {

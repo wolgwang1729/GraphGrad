@@ -101,6 +101,16 @@ export class Value {
     return out;
   }
 
+  log(): Value {
+    const out = new Value(Math.log(this.data), [this], "log");
+
+    out._backward = () => {
+      this.grad += (1 / this.data) * out.grad;
+    };
+
+    return out;
+  }
+
   sigmoid(): Value {
     const s = 1 / (1 + Math.exp(-this.data));
     const out = new Value(s, [this], "sigmoid");
