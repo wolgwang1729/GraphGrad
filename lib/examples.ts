@@ -5,7 +5,7 @@ export const PRACTICE_EXAMPLES: PracticeExample[] = [
     id: "mul-after-add",
     title: "Multiply after add",
     description:
-      String.raw`A classic micrograd example:$f(x,y,z) = (x+y)z$. Run backprop and compare the gradients to the diagram.`,
+      String.raw`A classic micrograd example:$$f(x,y,z) = (x+y)z$$ Run backprop and see the gradients on the edges.`,
     nodes: [
       { id: "x", kind: "input", label: "x", value: -2, position: { x: 0, y: 0 } },
       { id: "y", kind: "input", label: "y", value: 5, position: { x: 0, y: 100 } },
@@ -26,7 +26,7 @@ export const PRACTICE_EXAMPLES: PracticeExample[] = [
     id: "relu-chain",
     title: "Manual Sigmoid",
     description:
-      String.raw`A neuron with two inputs, broken down into primitive operations. Here we implement the sigmoid activation manually: $f(w,x) = \frac{1}{1 + e^{-(w_0x_0 + w_1x_1 + w_2)}}$.`,
+      String.raw`A neuron with two inputs, broken down into primitive operations. Here we implement the sigmoid activation manually: $$f(w,x) = \frac{1}{1 + e^{-(w_0x_0 + w_1x_1 + w_2)}}$$`,
     nodes: [
       { id: "w0", kind: "input", label: "w_0", value: 2.00, position: { x: 0, y: 0 } },
       { id: "x0", kind: "input", label: "x_0", value: -1.00, position: { x: 0, y: 80 } },
@@ -67,7 +67,7 @@ export const PRACTICE_EXAMPLES: PracticeExample[] = [
     id: "max-multiply",
     title: "Max and Multiply",
     description:
-      String.raw`A slightly more complex computation graph with a max operation: $f(x,y,z,w) = (x \cdot y + \max(z, w)) \cdot 2$.`,
+      String.raw`A slightly more complex computation graph with a max operation: $$f(x,y,z,w) = (x \cdot y + \max(z, w)) \cdot 2$$`,
     nodes: [
       { id: "x", kind: "input", label: "x", value: 3.00, position: { x: 0, y: 0 } },
       { id: "y", kind: "input", label: "y", value: -4.00, position: { x: 0, y: 100 } },

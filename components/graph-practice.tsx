@@ -387,17 +387,38 @@ const edgeTypes: EdgeTypes = {
 
 function renderTextWithMath(text: string) {
   if (!text.includes("$")) return text;
-  const parts = text.split("$");
-  return parts.map((part, index) => {
-    if (index % 2 === 1) {
-      return (
-        <span key={index}>
-          <InlineMath math={part} />
-        </span>
-      );
+  // Split on $$ first (display math rendered inline), then on $ (inline math)
+  const segments: React.ReactNode[] = [];
+  // Use regex to split: $$...$$  or $...$
+  const regex = /\$\$([^$]+?)\$\$|\$([^$]+?)\$/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    // Text before this match
+    if (match.index > lastIndex) {
+      segments.push(<span key={key++}>{text.slice(lastIndex, match.index)}</span>);
     }
-    return <span key={index}>{part}</span>;
-  });
+    const mathContent = match[1] ?? match[2]; // match[1] = $$, match[2] = $
+    const isDisplay = match[1] !== undefined; // was $$...$$
+    segments.push(
+      <span
+        key={key++}
+        style={isDisplay
+          ? { display: "block", textAlign: "center", overflowX: "auto", overflowY: "hidden", maxWidth: "100%", verticalAlign: "middle" }
+          : { display: "inline-block", verticalAlign: "middle" }
+        }
+      >
+        <InlineMath math={mathContent} />
+      </span>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  // Remaining text
+  if (lastIndex < text.length) {
+    segments.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+  }
+  return segments;
 }
 
 function ToneBanner({ status }: { status: StatusState }) {
