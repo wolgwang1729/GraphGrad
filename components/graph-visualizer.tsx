@@ -27,6 +27,7 @@ import {
   useNodesData,
   useNodesState,
   useReactFlow,
+  useUpdateNodeInternals,
 } from "@xyflow/react";
 import {
   createContext,
@@ -746,9 +747,18 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
   const editor = useGraphEditor();
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
+  const updateNodeInternals = useUpdateNodeInternals();
   const op = data.op ?? DEFAULT_OPERATION;
   const arity = getOperationArity(op);
   const mathStr = getOperationMathLabel(op, data.parameter);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      updateNodeInternals(id);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [arity, id, op, updateNodeInternals]);
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
