@@ -108,6 +108,11 @@ const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharr
 const FIT_VIEW_PADDING = 0.2;
 const SIDEBAR_RESERVED_WIDTH_PX = 430;
 const SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX = 0;
+const MOBILE_BREAKPOINT_PX = 640;
+const MOBILE_SIDEBAR_LEFT_OFFSET_PX = 10;
+const MOBILE_SIDEBAR_RIGHT_GAP_PX = 64;
+const MOBILE_SIDEBAR_MIN_WIDTH_PX = 256;
+const MOBILE_SIDEBAR_MAX_WIDTH_PX = 320;
 
 const TOOLBAR_THRESHOLD_PX = 150;
 
@@ -232,6 +237,26 @@ function decorateEdge(edge: EditorEdge, active = true): EditorEdge {
 
 function makeNodeId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function getSidebarReservedWidth(windowWidth: number, isSidebarOpen: boolean): number {
+  if (!isSidebarOpen) {
+    return SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX;
+  }
+
+  if (windowWidth < MOBILE_BREAKPOINT_PX) {
+    const sidebarWidth = Math.max(
+      Math.min(
+        windowWidth - MOBILE_SIDEBAR_LEFT_OFFSET_PX - MOBILE_SIDEBAR_RIGHT_GAP_PX,
+        MOBILE_SIDEBAR_MAX_WIDTH_PX,
+      ),
+      Math.min(MOBILE_SIDEBAR_MIN_WIDTH_PX, windowWidth - 32),
+    );
+
+    return Math.min(sidebarWidth + MOBILE_SIDEBAR_LEFT_OFFSET_PX, windowWidth - 16);
+  }
+
+  return SIDEBAR_RESERVED_WIDTH_PX;
 }
 
 function getInputLabelSubscript(label: string): number | null {
@@ -970,9 +995,7 @@ function VisualizerCanvas() {
         return;
       }
 
-      const reservedWidth = isSidebarOpen
-        ? SIDEBAR_RESERVED_WIDTH_PX
-        : SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX;
+      const reservedWidth = getSidebarReservedWidth(window.innerWidth, isSidebarOpen);
 
       if (nodes.length === 0) {
         void fitView({ duration, ...fitViewConfig });
@@ -1409,22 +1432,6 @@ function VisualizerCanvas() {
     [edges, nodes, setEdges, setNodes],
   );
 
-  useEffect(() => {
-    console.log(
-      JSON.stringify(
-        {
-          id: selectedExampleId,
-          title: COMPUTATION_EXAMPLES.find(e => e.id === selectedExampleId)?.title || "",
-          description: COMPUTATION_EXAMPLES.find(e => e.id === selectedExampleId)?.description || "",
-          nodes: serializeNodes(nodes),
-          edges: serializeEdges(edges),
-        },
-        null,
-        2
-      )
-    );
-  }, [nodes, edges, selectedExampleId]);
-
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
       <div className={`relative h-screen w-screen overflow-hidden font-light transition-colors duration-300 ${isDarkMode ? "bg-slate-900 text-slate-100" : "bg-[#f8f9fa] text-slate-800"}`}>
@@ -1481,7 +1488,7 @@ function VisualizerCanvas() {
         {/* Theme Toggle Button */}
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`absolute top-4 right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors border ${
+          className={`absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${
             isDarkMode
               ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
               : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -1496,18 +1503,18 @@ function VisualizerCanvas() {
         </button>
 
         {/* NN-SVG Style Floating Sidebar */}
-        <div className={`absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
+        <div className={`absolute top-2.5 left-2.5 right-16 z-20 flex max-h-[calc(100vh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:max-h-[calc(100vh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
           {/* Card Header */}
-          <div className={`border-b px-5 pt-4 pb-0 transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
+          <div className={`border-b px-4 pt-4 pb-0 transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
             <button 
-              className={`float-right mt-1 text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+              className={`float-right text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{ transform: isSidebarOpen ? "rotate(0deg)" : "rotate(-180deg)" }}
               aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
             </button>
-            <h1 className="mb-1 text-[2.5rem] font-thin leading-none tracking-wide">
+            <h1 className="mb-1 pr-10 text-[2rem] font-thin leading-none tracking-wide sm:text-[2.5rem]">
               GraphGrad
             </h1>
             <p className={`mb-4 text-[15px] font-light ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
@@ -1520,7 +1527,7 @@ function VisualizerCanvas() {
           </div>
 
           {/* Card Body */}
-          <div className={`overflow-y-auto p-5 transition-all [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "[&::-webkit-scrollbar-thumb]:bg-slate-600" : "[&::-webkit-scrollbar-thumb]:bg-slate-300"} ${isSidebarOpen ? "block" : "hidden"}`}>
+          <div className={`overflow-y-auto p-4 transition-all sm:p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "[&::-webkit-scrollbar-thumb]:bg-slate-600" : "[&::-webkit-scrollbar-thumb]:bg-slate-300"} ${isSidebarOpen ? "block" : "hidden"}`}>
             
             <ToneBanner status={status} />
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
@@ -1578,7 +1585,7 @@ function VisualizerCanvas() {
             {/* Nodes / Build */}
             <div>
               <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Nodes:</h4>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
                    onClick={() => addNode("input")}
@@ -1618,7 +1625,7 @@ function VisualizerCanvas() {
             {/* Evaluation */}
             <div>
               <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Evaluation:</h4>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("forward")}
@@ -1660,7 +1667,7 @@ function VisualizerCanvas() {
 
           {/* Footer */}
           {isSidebarOpen && (
-            <div className={`border-t px-5 py-2 text-center text-xs font-light transition-colors duration-300 flex items-center justify-center gap-2 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-slate-500" : "border-slate-200 bg-slate-100/50 text-slate-400 rounded-b"}`}>
+            <div className={`flex items-center justify-center gap-2 border-t px-4 py-2 text-center text-xs font-light transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-slate-500" : "border-slate-200 bg-slate-100/50 text-slate-400 rounded-b"}`}>
               <span>© 2026</span>
               <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                 <Logo size={18} />
