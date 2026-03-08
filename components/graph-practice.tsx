@@ -381,6 +381,21 @@ const edgeTypes: EdgeTypes = {
 
 /* ─── Status Banner ─── */
 
+function renderTextWithMath(text: string) {
+  if (!text.includes("$")) return text;
+  const parts = text.split("$");
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return (
+        <span key={index} className="inline-block whitespace-nowrap">
+          <InlineMath math={part} />
+        </span>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 function ToneBanner({ status }: { status: StatusState }) {
   const toneClasses: Record<StatusTone, string> = {
     info: "border-sky-500/30 bg-sky-500/10 text-slate-300",
@@ -390,7 +405,7 @@ function ToneBanner({ status }: { status: StatusState }) {
 
   return (
     <div className={`rounded-2xl border px-4 py-3 text-sm leading-6 ${toneClasses[status.tone]}`}>
-      {status.text}
+      {renderTextWithMath(status.text)}
     </div>
   );
 }
@@ -465,7 +480,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
             whiteSpace: "nowrap",
           }}
         >
-          <InlineMath math={data.label.replace(/(\d+)$/, "_{$1}")} />
+          <InlineMath math={data.label} />
         </div>
         <span style={{ fontSize: 11 }}>●</span>
         <Handle
@@ -537,7 +552,21 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
       </NodeToolbar>
       <div style={{ height: 18 }} />
       <div style={{ ...circleStyle }}>
-        <span><InlineMath math={mathStr} /></span>
+        {/* Label top */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "100%",
+            marginBottom: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#94a3b8",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <InlineMath math={data.label} />
+        </div>
+        <span style={(op === "relu" || op === "tanh" || op === "exp") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
       {arity === 1 ? (
         <Handle
           type="target"
@@ -597,6 +626,20 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
       {/* Empty space for alignment */}
       <div style={{ height: 22 }} />
       <div style={{ ...circleStyle, borderColor: "#f59e0b", background: "#422006", width: 36, height: 36 }}>
+        {/* Label top */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "100%",
+            marginBottom: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#94a3b8",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <InlineMath math={data.label} />
+        </div>
         <span style={{ fontSize: 9 }}>●</span>
         <Handle
           type="target"
@@ -972,6 +1015,22 @@ function PracticeCanvas() {
     },
     [edges, nodes, setEdges, setNodes],
   );
+
+  useEffect(() => {
+    console.log(
+      JSON.stringify(
+        {
+          id: selectedExampleId,
+          title: PRACTICE_EXAMPLES.find(e => e.id === selectedExampleId)?.title || "",
+          description: PRACTICE_EXAMPLES.find(e => e.id === selectedExampleId)?.description || "",
+          nodes: serializeNodes(nodes),
+          edges: serializeEdges(edges),
+        },
+        null,
+        2
+      )
+    );
+  }, [nodes, edges, selectedExampleId]);
 
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
