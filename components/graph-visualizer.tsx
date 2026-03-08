@@ -107,6 +107,20 @@ const SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX = 0;
 
 const TOOLBAR_THRESHOLD_PX = 150;
 
+const OPERATION_MATH_LABELS: Record<SupportedOperation, string> = {
+  add: "+",
+  mul: "\\times",
+  sub: "-",
+  div: "\\div",
+  pow: "x^{n}",
+  neg: "-x",
+  relu: "\\operatorname{ReLU}",
+  tanh: "\\tanh",
+  exp: "\\exp",
+  sigmoid: "\\sigma",
+  max: "\\max",
+};
+
 /**
  * Measures available space above the node in the viewport using actual DOM rects.
  * Returns Position.Bottom when the node is near the top edge, Position.Top otherwise.
@@ -177,6 +191,14 @@ function formatNumber(value: number | null | undefined): string {
   }
 
   return value.toFixed(2);
+}
+
+function getOperationMathLabel(op: SupportedOperation, parameter?: number): string {
+  if (op === "pow") {
+    return `x^{${parameter ?? 2}}`;
+  }
+
+  return OPERATION_MATH_LABELS[op] ?? OPERATION_LABELS[op];
 }
 
 function resetNodeMetrics(node: EditorNode): EditorNode {
@@ -558,6 +580,108 @@ const SmartNumberInput = memo(function SmartNumberInput({
   );
 });
 
+const OperationSelect = memo(function OperationSelect({
+  value,
+  parameter,
+  isDarkMode,
+  onChange,
+}: {
+  value: SupportedOperation;
+  parameter?: number;
+  isDarkMode: boolean;
+  onChange: (value: SupportedOperation) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+
+      if (!containerRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        className={`nodrag flex w-full items-center justify-between rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
+        onClick={() => setIsOpen((current) => !current)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="flex items-center gap-2">
+          <span className="font-mono opacity-80">{value}</span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center">
+            <InlineMath math={getOperationMathLabel(value, parameter)} />
+          </span>
+        </span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}>
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 rounded border shadow-xl ${isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+          role="listbox"
+          aria-label="Operation"
+        >
+          {Object.keys(OPERATION_LABELS).map((operation) => {
+            const optionValue = operation as SupportedOperation;
+
+            return (
+              <button
+                key={optionValue}
+                type="button"
+                role="option"
+                aria-selected={optionValue === value}
+                className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition ${optionValue === value
+                  ? isDarkMode
+                    ? "bg-slate-800 text-white"
+                    : "bg-slate-100 text-slate-900"
+                  : isDarkMode
+                    ? "text-slate-200 hover:bg-slate-800"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+                onClick={() => {
+                  onChange(optionValue);
+                  setIsOpen(false);
+                }}
+              >
+                <span className="font-mono opacity-80">{optionValue}</span>
+                <span className="ml-3 inline-flex items-center justify-end">
+                  <InlineMath math={getOperationMathLabel(optionValue)} />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+});
+
 const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<InputEditorNode>) {
   const editor = useGraphEditor();
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -624,25 +748,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
   const toolbarPos = useToolbarPosition(nodeRef);
   const op = data.op ?? DEFAULT_OPERATION;
   const arity = getOperationArity(op);
-  const symbol = OPERATION_LABELS[op];
-
-  let mathStr = "";
-  if (op === "pow") {
-    mathStr = `x^{${data.parameter ?? 2}}`;
-  } else {
-    mathStr = {
-      add: "+",
-      mul: "\\times",
-      sub: "-",
-      div: "\\div",
-      neg: "-",
-      relu: "\\text{ReLU}",
-      tanh: "\\tanh",
-      exp: "\\exp",
-      sigmoid: "\\sigma",
-      max: "\\max",
-    }[op] || symbol;
-  }
+  const mathStr = getOperationMathLabel(op, data.parameter);
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -653,11 +759,12 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
         </div>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Operation</label>
-          <select className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={op} onChange={(e) => editor.updateOperation(id, e.target.value as SupportedOperation)}>
-            {Object.entries(OPERATION_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{value} · {label}</option>
-            ))}
-          </select>
+          <OperationSelect
+            value={op}
+            parameter={data.parameter}
+            isDarkMode={editor.isDarkMode}
+            onChange={(value) => editor.updateOperation(id, value)}
+          />
         </div>
         {op === "pow" && (
           <div className="flex flex-col gap-1">
