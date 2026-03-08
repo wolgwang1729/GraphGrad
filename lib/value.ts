@@ -63,6 +63,22 @@ export class Value {
     return out;
   }
 
+  max(other: Value | number): Value {
+    const rhs = Value.coerce(other);
+    const result = Math.max(this.data, rhs.data);
+    const out = new Value(result, [this, rhs], "max");
+
+    out._backward = () => {
+      if (this.data >= rhs.data) {
+        this.grad += out.grad;
+      } else {
+        rhs.grad += out.grad;
+      }
+    };
+
+    return out;
+  }
+
   tanh(): Value {
     const t = Math.tanh(this.data);
     const out = new Value(t, [this], "tanh");

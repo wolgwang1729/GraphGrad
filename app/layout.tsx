@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Backprop Practice",
+  title: "GraphGrad",
   description: "A simple app for practicing backpropagation concepts",
 };
 

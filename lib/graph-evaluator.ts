@@ -58,6 +58,8 @@ function sortIncomingEdges(edges: GraphEdgeSpec[]): GraphEdgeSpec[] {
 
 function applyOperation(node: OperationNodeSpec, inputs: Value[]): Value {
   switch (node.op) {
+    case "max":
+      return inputs[0].max(inputs[1]);
     case "add":
       return inputs[0].add(inputs[1]);
     case "mul":

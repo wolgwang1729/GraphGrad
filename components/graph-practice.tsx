@@ -387,7 +387,7 @@ function renderTextWithMath(text: string) {
   return parts.map((part, index) => {
     if (index % 2 === 1) {
       return (
-        <span key={index} className="inline-block whitespace-nowrap">
+        <span key={index}>
           <InlineMath math={part} />
         </span>
       );
@@ -515,6 +515,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
       tanh: "\\tanh",
       exp: "\\exp",
       sigmoid: "\\sigma",
+      max: "\\max",
     }[op] || symbol;
   }
 
@@ -566,7 +567,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
         >
           <InlineMath math={data.label} />
         </div>
-        <span style={(op === "relu" || op === "tanh" || op === "exp") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
+        <span style={(op === "relu" || op === "tanh" || op === "exp" || op === "max") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
       {arity === 1 ? (
         <Handle
           type="target"
@@ -981,7 +982,7 @@ function PracticeCanvas() {
             data: {
               ...node.data,
               resultValue: metrics.value,
-              grad: metrics.grad,
+              grad: mode === "backward" ? metrics.grad : null,
             },
           };
         }),
@@ -996,22 +997,16 @@ function PracticeCanvas() {
             ...decorateEdge(edge, isActive),
             data: {
               forwardValue: sourceResult?.value ?? null,
-              gradValue: sourceResult?.grad ?? null,
+              gradValue: mode === "backward" ? (sourceResult?.grad ?? null) : null,
             },
           };
         }),
       );
 
-      const outputMetrics = result.nodeResults[result.activeOutputId];
-      const warningsText = result.warnings.length > 0 ? ` ${result.warnings.join(" ")}` : "";
-
-      setStatus({
+      setStatus((prev) => ({
         tone: "success",
-        text:
-          mode === "forward"
-            ? `Forward pass complete. Output = ${formatNumber(outputMetrics?.value)}.${warningsText}`
-            : `Backward pass complete. Output = ${formatNumber(outputMetrics?.value)}, dOutput/dOutput = ${formatNumber(outputMetrics?.grad)}.${warningsText}`,
-      });
+        text: prev.text,
+      }));
     },
     [edges, nodes, setEdges, setNodes],
   );
