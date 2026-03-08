@@ -78,6 +78,7 @@ type OperationEditorNode = Node<EditorNodeData, "operationNode">;
 type OutputEditorNode = Node<EditorNodeData, "outputNode">;
 
 type EditorContextValue = {
+  isDarkMode: boolean;
   updateLabel: (nodeId: string, label: string) => void;
   updateValue: (nodeId: string, value: number) => void;
   updateOperation: (nodeId: string, op: SupportedOperation) => void;
@@ -400,10 +401,11 @@ function renderTextWithMath(text: string) {
 }
 
 function ToneBanner({ status }: { status: StatusState }) {
+  const { isDarkMode } = useGraphEditor();
   const toneClasses: Record<StatusTone, string> = {
-    info: "border-sky-500/30 bg-sky-500/10 text-slate-300",
-    success: "border-emerald-500/30 bg-emerald-500/10 text-slate-300",
-    error: "border-rose-500/30 bg-rose-500/10 text-slate-300",
+    info: `border-sky-500/30 bg-sky-500/10 ${isDarkMode ? "text-slate-300" : "text-sky-900"}`,
+    success: `border-emerald-500/30 bg-emerald-500/10 ${isDarkMode ? "text-slate-300" : "text-emerald-900"}`,
+    error: `border-rose-500/30 bg-rose-500/10 ${isDarkMode ? "text-slate-300" : "text-rose-900"}`,
   };
 
   return (
@@ -417,28 +419,34 @@ function ToneBanner({ status }: { status: StatusState }) {
 
 const CIRCLE_SIZE = 44;
 
-const circleStyle: React.CSSProperties = {
-  width: CIRCLE_SIZE,
-  height: CIRCLE_SIZE,
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: "grab",
-  border: "2px solid #64748b",
-  background: "#1e293b",
-  color: "#e2e8f0",
-  position: "relative",
-};
+function getCircleStyle(isDarkMode: boolean): React.CSSProperties {
+  return {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "grab",
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: isDarkMode ? "#64748b" : "#cbd5e1",
+    background: isDarkMode ? "#1e293b" : "#ffffff",
+    color: isDarkMode ? "#e2e8f0" : "#0f172a",
+    position: "relative",
+  };
+}
 
-const handleStyle: React.CSSProperties = {
-  width: 8,
-  height: 8,
-  backgroundColor: "#94a3b8",
-  border: "1.5px solid #0f172a",
-};
+function getHandleStyle(isDarkMode: boolean): React.CSSProperties {
+  return {
+    width: 8,
+    height: 8,
+    backgroundColor: isDarkMode ? "#94a3b8" : "#cbd5e1",
+    border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
+  };
+}
 
 const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<InputEditorNode>) {
   const editor = useGraphEditor();
@@ -447,30 +455,30 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+      <NodeToolbar isVisible={selected} position={toolbarPos} className={`flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
-          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+          <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
+          <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold uppercase text-slate-400">Value</label>
-          <input type="number" step="any" className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.value ?? 0} onChange={(e) => editor.updateValue(id, Number(e.target.value))} />
+          <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Value</label>
+          <input type="number" step="any" className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.value ?? 0} onChange={(e) => editor.updateValue(id, Number(e.target.value))} />
         </div>
         <div className="mt-1 space-y-1 text-xs">
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Data</span>
-            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Data</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{formatNumber(data.resultValue) || "—"}</span>
           </div>
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Grad</span>
-            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Grad</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-rose-400" : "text-rose-600"}`}>{formatNumber(data.grad) || "—"}</span>
           </div>
         </div>
       </NodeToolbar>
       {/* Empty space for alignment */}
       <div style={{ height: 18 }} />
       {/* Circle */}
-      <div style={{ ...circleStyle, borderColor: "#22c55e", background: "#052e16" }}>
+      <div style={{ ...getCircleStyle(editor.isDarkMode), borderColor: "#22c55e", background: editor.isDarkMode ? "#0f172a" : "#f0fdf4", color: editor.isDarkMode ? "#e2e8f0" : "#14532d" }}>
         {/* Label left */}
         <div
           style={{
@@ -479,7 +487,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
             marginRight: 10,
             fontSize: 12,
             fontWeight: 500,
-            color: "#e2e8f0",
+            color: editor.isDarkMode ? "#e2e8f0" : "#475569",
             whiteSpace: "nowrap",
           }}
         >
@@ -489,7 +497,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
         <Handle
           type="source"
           position={Position.Right}
-          style={handleStyle}
+          style={getHandleStyle(editor.isDarkMode)}
         />
       </div>
     </div>
@@ -524,14 +532,14 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+      <NodeToolbar isVisible={selected} position={toolbarPos} className={`flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
-          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+          <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
+          <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold uppercase text-slate-400">Operation</label>
-          <select className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={op} onChange={(e) => editor.updateOperation(id, e.target.value as SupportedOperation)}>
+          <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Operation</label>
+          <select className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={op} onChange={(e) => editor.updateOperation(id, e.target.value as SupportedOperation)}>
             {Object.entries(OPERATION_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{value} · {label}</option>
             ))}
@@ -539,23 +547,23 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
         </div>
         {op === "pow" && (
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold uppercase text-slate-400">Exponent</label>
-            <input type="number" step="any" className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.parameter ?? 2} onChange={(e) => editor.updateParameter(id, Number(e.target.value))} />
+            <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Exponent</label>
+            <input type="number" step="any" className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.parameter ?? 2} onChange={(e) => editor.updateParameter(id, Number(e.target.value))} />
           </div>
         )}
         <div className="mt-1 space-y-1 text-xs">
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Data</span>
-            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Data</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{formatNumber(data.resultValue) || "—"}</span>
           </div>
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Grad</span>
-            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Grad</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-rose-400" : "text-rose-600"}`}>{formatNumber(data.grad) || "—"}</span>
           </div>
         </div>
       </NodeToolbar>
       <div style={{ height: 18 }} />
-      <div style={{ ...circleStyle }}>
+      <div style={{ ...getCircleStyle(editor.isDarkMode), borderColor: "#3b82f6", background: editor.isDarkMode ? "#0f172a" : "#eff6ff", color: editor.isDarkMode ? "#e2e8f0" : "#1e3a8a" }}>
         {/* Label top */}
         <div
           style={{
@@ -564,7 +572,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
             marginBottom: 6,
             fontSize: 12,
             fontWeight: 500,
-            color: "#94a3b8",
+            color: editor.isDarkMode ? "#94a3b8" : "#64748b",
             whiteSpace: "nowrap",
           }}
         >
@@ -576,7 +584,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
           type="target"
           id="a"
           position={Position.Left}
-          style={{ ...handleStyle, top: "50%" }}
+          style={{ ...getHandleStyle(editor.isDarkMode), top: "50%" }}
         />
       ) : (
         <>
@@ -584,20 +592,20 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
             type="target"
             id="a"
             position={Position.Left}
-            style={{ ...handleStyle, top: "30%" }}
+            style={{ ...getHandleStyle(editor.isDarkMode), top: "30%" }}
           />
           <Handle
             type="target"
             id="b"
             position={Position.Left}
-            style={{ ...handleStyle, top: "70%" }}
+            style={{ ...getHandleStyle(editor.isDarkMode), top: "70%" }}
           />
         </>
       )}
       <Handle
         type="source"
         position={Position.Right}
-        style={handleStyle}
+        style={getHandleStyle(editor.isDarkMode)}
       />
       </div>
     </div>
@@ -611,25 +619,25 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+      <NodeToolbar isVisible={selected} position={toolbarPos} className={`flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
-          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+          <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
+          <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
         </div>
         <div className="mt-1 space-y-1 text-xs">
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Data</span>
-            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Data</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{formatNumber(data.resultValue) || "—"}</span>
           </div>
-          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
-            <span className="text-slate-400">Grad</span>
-            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+            <span className={editor.isDarkMode ? "text-slate-400" : "text-slate-500"}>Grad</span>
+            <span className={`font-mono ${editor.isDarkMode ? "text-rose-400" : "text-rose-600"}`}>{formatNumber(data.grad) || "—"}</span>
           </div>
         </div>
       </NodeToolbar>
       {/* Empty space for alignment */}
       <div style={{ height: 22 }} />
-      <div style={{ ...circleStyle, borderColor: "#f59e0b", background: "#422006", width: 36, height: 36 }}>
+      <div style={{ ...getCircleStyle(editor.isDarkMode), borderColor: "#f59e0b", background: editor.isDarkMode ? "#0f172a" : "#fffbeb", color: editor.isDarkMode ? "#e2e8f0" : "#78350f", width: 36, height: 36 }}>
         {/* Label top */}
         <div
           style={{
@@ -638,7 +646,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
             marginBottom: 6,
             fontSize: 12,
             fontWeight: 500,
-            color: "#94a3b8",
+            color: editor.isDarkMode ? "#94a3b8" : "#64748b",
             whiteSpace: "nowrap",
           }}
         >
@@ -649,7 +657,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
           type="target"
           id="in"
           position={Position.Left}
-          style={handleStyle}
+          style={getHandleStyle(editor.isDarkMode)}
         />
       </div>
     </div>
@@ -678,6 +686,7 @@ function PracticeCanvas() {
     text: PRACTICE_EXAMPLES[0].description,
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   const fitViewConfig = useMemo(
     () => ({
@@ -861,12 +870,13 @@ function PracticeCanvas() {
 
   const editorContextValue = useMemo<EditorContextValue>(
     () => ({
+      isDarkMode,
       updateLabel,
       updateValue,
       updateOperation,
       updateParameter,
     }),
-    [updateLabel, updateOperation, updateParameter, updateValue],
+    [isDarkMode, updateLabel, updateOperation, updateParameter, updateValue],
   );
 
   const loadExample = useCallback(
@@ -1091,9 +1101,9 @@ function PracticeCanvas() {
 
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
-      <div className="relative h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-light">
+      <div className={`relative h-screen w-screen overflow-hidden font-light transition-colors duration-300 ${isDarkMode ? "bg-slate-900 text-slate-100" : "bg-[#f8f9fa] text-slate-800"}`}>
         {/* Main Canvas */}
-        <main className="absolute inset-0 bg-slate-900">
+        <main className={`absolute inset-0 transition-colors duration-300 ${isDarkMode ? "bg-slate-900" : "bg-[#ffffff]"}`}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1106,7 +1116,7 @@ function PracticeCanvas() {
             deleteKeyCode={["Backspace", "Delete"]}
             proOptions={{ hideAttribution: true }}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-            colorMode="dark"
+            colorMode={isDarkMode ? "dark" : "light"}
             className="h-full w-full"
           >
             <Controls position="bottom-right" showFitView={false}>
@@ -1119,45 +1129,62 @@ function PracticeCanvas() {
                 </svg>
               </ControlButton>
             </Controls>
-            <Background gap={20} size={1} color="rgba(148, 163, 184, 0.08)" />
+            <Background gap={20} size={1} color={isDarkMode ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.2)"} />
           </ReactFlow>
         </main>
 
+        {/* Theme Toggle Button */}
+        <button
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className={`absolute top-4 right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors border ${
+            isDarkMode
+              ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          }`}
+          aria-label="Toggle Theme"
+        >
+          {isDarkMode ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          )}
+        </button>
+
         {/* NN-SVG Style Floating Sidebar */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border border-slate-700 bg-slate-800 shadow-2xl">
+        <div className={`absolute top-2.5 left-2.5 z-10 flex max-h-[calc(100vh-60px)] w-102.5 flex-col rounded border shadow-2xl transition-colors duration-300 ${isDarkMode ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
           {/* Card Header */}
-          <div className="border-b border-slate-700 bg-slate-800 px-5 pt-4 pb-0">
+          <div className={`border-b px-5 pt-4 pb-0 transition-colors duration-300 ${isDarkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-800 rounded-t"}`}>
             <button 
-              className="float-right mt-1 text-2xl text-slate-400 transition-transform hover:text-white"
+              className={`float-right mt-1 text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{ transform: isSidebarOpen ? "rotate(0deg)" : "rotate(-180deg)" }}
               aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
             </button>
-            <h1 className="mb-1 text-[2.5rem] font-thin leading-none tracking-wide text-white">
+            <h1 className="mb-1 text-[2.5rem] font-thin leading-none tracking-wide">
               GraphGrad
             </h1>
-            <p className="mb-4 text-[15px] font-light text-slate-300">
-              Computation Graph Visualizer. <a href="#" onClick={(e) => { e.preventDefault(); clearCanvas(); }} className="text-indigo-400 hover:text-indigo-300">Clear Canvas</a>
+            <p className={`mb-4 text-[15px] font-light ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+              Computation Graph Visualizer. <a href="#" onClick={(e) => { e.preventDefault(); clearCanvas(); }} className={`hover:underline ${isDarkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-500"}`}>Clear Canvas</a>
             </p>
 
             {/* Simulated Tabs matching NN-SVG Nav Tabs */}
-            <nav className="flex translate-y-px space-x-1 border-b border-slate-700">
+            <nav className={`flex translate-y-px space-x-1 border-b ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
             </nav>
           </div>
 
           {/* Card Body */}
-          <div className={`overflow-y-auto p-5 transition-all [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600 ${isSidebarOpen ? "block" : "hidden"}`}>
+          <div className={`overflow-y-auto p-5 transition-all [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "[&::-webkit-scrollbar-thumb]:bg-slate-600" : "[&::-webkit-scrollbar-thumb]:bg-slate-300"} ${isSidebarOpen ? "block" : "hidden"}`}>
             
             <ToneBanner status={status} />
-            <hr className="my-5 border-slate-700" />
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
-            {/* Architecture / Examples */}
+            {/*Examples */}
             <div>
-              <h4 className="mb-3 text-lg font-light text-slate-200">Architecture:</h4>
+              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Examples:</h4>
               <select
-                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 text-[15px] font-light text-slate-100 outline-none focus:border-indigo-500"
+                className={`w-full rounded border px-3 py-2 text-[15px] font-light outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
                 value={selectedExampleId}
                 onChange={(event) => {
                   const next = PRACTICE_EXAMPLES.find((e) => e.id === event.target.value);
@@ -1172,11 +1199,11 @@ function PracticeCanvas() {
               </select>
             </div>
 
-            <hr className="my-5 border-slate-700" />
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
             {/* Nodes / Build */}
             <div>
-              <h4 className="mb-3 text-lg font-light text-slate-200">Nodes:</h4>
+              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Nodes:</h4>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
@@ -1185,13 +1212,13 @@ function PracticeCanvas() {
                   + Input
                 </button>
                 <button
-                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
                   onClick={() => addNode("operation")}
                 >
                   + Op
                 </button>
                 <button
-                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:opacity-50"
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent disabled:opacity-50 ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
                   onClick={() => addNode("output")}
                   disabled={hasOutputNode}
                 >
@@ -1200,11 +1227,11 @@ function PracticeCanvas() {
               </div>
             </div>
 
-            <hr className="my-5 border-slate-700" />
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
             {/* Evaluation */}
             <div>
-              <h4 className="mb-3 text-lg font-light text-slate-200">Evaluation:</h4>
+              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Evaluation:</h4>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
@@ -1213,13 +1240,13 @@ function PracticeCanvas() {
                   Forward
                 </button>
                 <button
-                  className="rounded-sm bg-slate-700 px-3 py-1.5 text-[15px] text-slate-200 transition hover:bg-slate-600"
+                  className={`rounded-sm px-3 py-1.5 text-[15px] transition ${isDarkMode ? "bg-slate-700 text-slate-200 hover:bg-slate-600" : "bg-slate-200 text-slate-800 hover:bg-slate-300"}`}
                   onClick={() => runEvaluation("backward")}
                 >
                   Backprop
                 </button>
                 <button
-                  className="rounded-sm border border-slate-600 bg-transparent px-3 py-1.5 text-[15px] text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
                   onClick={() => resetComputedState()}
                 >
                   Clear
@@ -1227,12 +1254,12 @@ function PracticeCanvas() {
               </div>
             </div>
 
-            <hr className="my-5 border-slate-700" />
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
             {/* Legend */}
             <div>
-              <h4 className="mb-2 text-lg font-light text-slate-200">Style / Legend:</h4>
-              <div className="space-y-2 text-[15px] text-slate-300">
+              <h4 className={`mb-2 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Style / Legend:</h4>
+              <div className={`space-y-2 text-[15px] ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
                 <div className="flex items-center gap-3">
                   <span className="inline-block h-3 w-6 rounded-sm bg-[#22c55e]" />
                   <span>Forward value (above edge)</span>
@@ -1242,7 +1269,7 @@ function PracticeCanvas() {
                   <span>Gradient (below edge)</span>
                 </div>
               </div>
-              <p className="mt-4 text-[13px] text-slate-400">
+              <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                 Click a node to edit its properties inline.
               </p>
             </div>
