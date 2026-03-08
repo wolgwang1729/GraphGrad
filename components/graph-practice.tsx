@@ -469,6 +469,60 @@ function getHandleStyle(isDarkMode: boolean): React.CSSProperties {
   };
 }
 
+const SmartNumberInput = memo(function SmartNumberInput({
+  value,
+  onUpdate,
+  className,
+}: {
+  value: number;
+  onUpdate: (val: number) => void;
+  className: string;
+}) {
+  const [localText, setLocalText] = useState(value.toString());
+
+  useEffect(() => {
+    const parsedLocal = parseFloat(localText);
+    if (parsedLocal !== value) {
+      setLocalText(value.toString());
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    // Allow digits, decimal point, and leading minus
+    if (/^-?\d*\.?\d*$/.test(text) || text === "") {
+      setLocalText(text);
+
+      // Only push to parent if it's a "complete" number string
+      if (text !== "" && text !== "-" && text !== "." && text !== "-." && !text.endsWith(".")) {
+        const num = Number(text);
+        if (!isNaN(num)) {
+          onUpdate(num);
+        }
+      }
+    }
+  };
+
+  return (
+    <input
+      className={className}
+      value={localText}
+      onChange={handleChange}
+      onBlur={() => {
+        const num = Number(localText);
+        if (isNaN(num) || localText === "") {
+          const fallback = 0;
+          onUpdate(fallback);
+          setLocalText(fallback.toString());
+        } else {
+          onUpdate(num);
+          setLocalText(num.toString()); // Normalize view (e.g., "-0" -> "0", "05" -> "5")
+        }
+      }}
+    />
+  );
+});
+
 const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<InputEditorNode>) {
   const editor = useGraphEditor();
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -483,7 +537,11 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
         </div>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Value</label>
-          <input type="number" step="any" className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.value ?? 0} onChange={(e) => editor.updateValue(id, Number(e.target.value))} />
+          <SmartNumberInput 
+            className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} 
+            value={data.value ?? 0} 
+            onUpdate={(val) => editor.updateValue(id, val)} 
+          />
         </div>
         <div className="mt-1 space-y-1 text-xs">
           <div className={`flex justify-between gap-4 rounded px-2 py-1 ${editor.isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
@@ -569,7 +627,11 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
         {op === "pow" && (
           <div className="flex flex-col gap-1">
             <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Exponent</label>
-            <input type="number" step="any" className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.parameter ?? 2} onChange={(e) => editor.updateParameter(id, Number(e.target.value))} />
+            <SmartNumberInput 
+              className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} 
+              value={data.parameter ?? 2} 
+              onUpdate={(val) => editor.updateParameter(id, val)} 
+            />
           </div>
         )}
         <div className="mt-1 space-y-1 text-xs">
@@ -708,6 +770,7 @@ function PracticeCanvas() {
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isLocked, setIsLocked] = useState(false);
 
   const fitViewConfig = useMemo(
     () => ({
@@ -1128,26 +1191,44 @@ function PracticeCanvas() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={handleEdgesChange}
-            onConnect={onConnect}
+            onNodesChange={isLocked ? () => {} : handleNodesChange}
+            onEdgesChange={isLocked ? () => {} : handleEdgesChange}
+            onConnect={isLocked ? () => {} : onConnect}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitViewOptions={fitViewConfig}
-            deleteKeyCode={["Backspace", "Delete"]}
+            deleteKeyCode={isLocked ? [] : ["Backspace", "Delete"]}
             proOptions={{ hideAttribution: true }}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             colorMode={isDarkMode ? "dark" : "light"}
+            nodesDraggable={!isLocked}
+            nodesConnectable={!isLocked}
+            elementsSelectable={!isLocked}
+            edgesReconnectable={!isLocked}
+            edgesFocusable={!isLocked}
             className="h-full w-full"
           >
-            <Controls position="bottom-right" showFitView={false}>
-              <ControlButton onClick={() => fitGraphToVisibleArea(250)} aria-label="Fit graph to screen">
+            <Controls position="bottom-right" showFitView={false} showInteractive={false}>
+              <ControlButton onClick={() => fitGraphToVisibleArea(250)} title="Fit to screen" aria-label="Fit graph to screen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 3 21 3 21 9"></polyline>
                   <polyline points="9 21 3 21 3 15"></polyline>
                   <line x1="21" y1="3" x2="14" y2="10"></line>
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
+              </ControlButton>
+              <ControlButton onClick={() => setIsLocked(!isLocked)} title={isLocked ? "Unlock graph" : "Lock graph"} aria-label={isLocked ? "Unlock graph" : "Lock graph"}>
+                {isLocked ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                )}
               </ControlButton>
             </Controls>
             <Background gap={20} size={1} color={isDarkMode ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.2)"} />
