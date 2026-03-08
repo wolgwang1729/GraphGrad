@@ -1025,6 +1025,7 @@ function VisualizerCanvas() {
   const clearCanvas = useCallback(() => {
     setNodes([]);
     setEdges([]);
+    setSelectedExampleId("");
     setStatus({ tone: "info", text: "Canvas cleared. Add nodes or load an example to start." });
   }, [setEdges, setNodes]);
 
@@ -1046,6 +1047,7 @@ function VisualizerCanvas() {
           };
         }),
       );
+      setSelectedExampleId("");
       setStatus(DEFAULT_STATUS);
     },
     [setNodes],
@@ -1069,6 +1071,7 @@ function VisualizerCanvas() {
           };
         }),
       );
+      setSelectedExampleId("");
       setStatus(DEFAULT_STATUS);
     },
     [setNodes],
@@ -1092,6 +1095,7 @@ function VisualizerCanvas() {
           };
         }),
       );
+      setSelectedExampleId("");
       setStatus(DEFAULT_STATUS);
     },
     [setNodes],
@@ -1125,6 +1129,7 @@ function VisualizerCanvas() {
         );
       }
 
+      setSelectedExampleId("");
       setStatus(DEFAULT_STATUS);
     },
     [setEdges, setNodes],
@@ -1161,6 +1166,7 @@ function VisualizerCanvas() {
       onNodesChange(changes);
 
       if (changes.some((change) => change.type === "remove")) {
+        setSelectedExampleId("");
         setStatus(DEFAULT_STATUS);
       }
     },
@@ -1173,6 +1179,7 @@ function VisualizerCanvas() {
 
       if (changes.some((change) => change.type === "remove")) {
         resetComputedState();
+        setSelectedExampleId("");
       }
     },
     [onEdgesChange, resetComputedState],
@@ -1238,6 +1245,7 @@ function VisualizerCanvas() {
       });
 
       setEdges((current) => current.map((edge) => decorateEdge(edge)));
+      setSelectedExampleId("");
       setStatus({
         tone: "info",
         text: `Added a new ${kind} node. Connect it into the graph to make it active.`,
@@ -1276,6 +1284,7 @@ function VisualizerCanvas() {
       });
 
       setNodes((current) => current.map(resetNodeMetrics));
+      setSelectedExampleId("");
       setStatus({
         tone: "info",
         text: "Connection updated. Run the graph again to refresh values and gradients.",
@@ -1472,6 +1481,7 @@ function VisualizerCanvas() {
                   if (next) loadExample(next);
                 }}
               >
+                <option value="" disabled hidden>Custom Graph</option>
                 {COMPUTATION_EXAMPLES.map((example) => (
                   <option key={example.id} value={example.id}>
                     {example.title}
