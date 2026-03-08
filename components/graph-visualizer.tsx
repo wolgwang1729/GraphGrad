@@ -1434,7 +1434,7 @@ function VisualizerCanvas() {
 
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
-      <div className={`relative h-screen w-screen overflow-hidden font-light transition-colors duration-300 ${isDarkMode ? "bg-slate-900 text-slate-100" : "bg-[#f8f9fa] text-slate-800"}`}>
+      <div className={`relative h-dvh w-screen overflow-hidden font-light transition-colors duration-300 ${isDarkMode ? "bg-slate-900 text-slate-100" : "bg-[#f8f9fa] text-slate-800"}`}>
         {/* Main Canvas */}
         <main className={`absolute inset-0 transition-colors duration-300 ${isDarkMode ? "bg-slate-900" : "bg-[#ffffff]"}`}>
           <ReactFlow
@@ -1458,7 +1458,7 @@ function VisualizerCanvas() {
             edgesFocusable={!isLocked}
             className="h-full w-full"
           >
-            <Controls position="bottom-right" showFitView={false} showInteractive={false}>
+            <Controls position="bottom-right" showFitView={false} showInteractive={false} className="bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]! sm:bottom-4!">
               <ControlButton onClick={() => fitGraphToVisibleArea(250)} title="Fit to screen" aria-label="Fit graph to screen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 3 21 3 21 9"></polyline>
@@ -1503,7 +1503,7 @@ function VisualizerCanvas() {
         </button>
 
         {/* NN-SVG Style Floating Sidebar */}
-        <div className={`absolute top-2.5 left-2.5 right-16 z-20 flex max-h-[calc(100vh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:max-h-[calc(100vh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
+        <div className={`absolute top-2.5 left-2.5 right-16 z-20 flex max-h-[calc(100dvh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:max-h-[calc(100dvh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
           {/* Card Header */}
           <div className={`border-b px-4 pt-4 pb-0 transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
             <button 
