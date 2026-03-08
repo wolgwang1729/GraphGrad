@@ -9,6 +9,7 @@ import {
   Controls,
   Handle,
   MiniMap,
+  NodeToolbar,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -33,6 +34,8 @@ import {
   useContext,
   useMemo,
   useState,
+  useRef,
+  useEffect,
 } from "react";
 
 import "katex/dist/katex.min.css";
@@ -95,6 +98,56 @@ const DEFAULT_STATUS: StatusState = {
 };
 
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
+
+const TOOLBAR_THRESHOLD_PX = 150;
+
+/**
+ * Measures available space above the node in the viewport using actual DOM rects.
+ * Returns Position.Bottom when the node is near the top edge, Position.Top otherwise.
+ */
+function useToolbarPosition(nodeRef: React.RefObject<HTMLDivElement | null>): Position {
+  const [pos, setPos] = useState<Position>(Position.Top);
+
+  useEffect(() => {
+    const el = nodeRef.current;
+    if (!el) return;
+
+    function measure() {
+      const el = nodeRef.current;
+      if (!el) return;
+      // Walk up to the .react-flow wrapper to get the canvas bounding box
+      const rfContainer = el.closest(".react-flow") as HTMLElement | null;
+      if (!rfContainer) return;
+      const containerRect = rfContainer.getBoundingClientRect();
+      const nodeRect = el.getBoundingClientRect();
+      const spaceAbove = nodeRect.top - containerRect.top;
+      setPos(spaceAbove < TOOLBAR_THRESHOLD_PX ? Position.Bottom : Position.Top);
+    }
+
+    measure();
+    // Re-measure on scroll/wheel (panning) and on any transform change
+    const rfContainer = el.closest(".react-flow") as HTMLElement | null;
+    if (!rfContainer) return;
+
+    const observer = new MutationObserver(measure);
+    // The .react-flow__viewport element gets transform style changes on pan/zoom
+    const viewport = rfContainer.querySelector(".react-flow__viewport");
+    if (viewport) {
+      observer.observe(viewport, { attributes: true, attributeFilter: ["style"] });
+    }
+
+    rfContainer.addEventListener("wheel", measure, { passive: true });
+    window.addEventListener("resize", measure);
+
+    return () => {
+      observer.disconnect();
+      rfContainer.removeEventListener("wheel", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [nodeRef]);
+
+  return pos;
+}
 
 const GraphEditorContext = createContext<EditorContextValue | null>(null);
 
@@ -330,9 +383,9 @@ const edgeTypes: EdgeTypes = {
 
 function ToneBanner({ status }: { status: StatusState }) {
   const toneClasses: Record<StatusTone, string> = {
-    info: "border-sky-500/30 bg-sky-500/10 text-sky-300",
-    success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-    error: "border-rose-500/30 bg-rose-500/10 text-rose-300",
+    info: "border-sky-500/30 bg-sky-500/10 text-slate-300",
+    success: "border-emerald-500/30 bg-emerald-500/10 text-slate-300",
+    error: "border-rose-500/30 bg-rose-500/10 text-slate-300",
   };
 
   return (
@@ -369,9 +422,33 @@ const handleStyle: React.CSSProperties = {
   border: "1.5px solid #0f172a",
 };
 
-const InputNode = memo(function InputNode({ data }: NodeProps<InputEditorNode>) {
+const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<InputEditorNode>) {
+  const editor = useGraphEditor();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const toolbarPos = useToolbarPosition(nodeRef);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
+          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold uppercase text-slate-400">Value</label>
+          <input type="number" step="any" className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.value ?? 0} onChange={(e) => editor.updateValue(id, Number(e.target.value))} />
+        </div>
+        <div className="mt-1 space-y-1 text-xs">
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Data</span>
+            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          </div>
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Grad</span>
+            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          </div>
+        </div>
+      </NodeToolbar>
       {/* Empty space for alignment */}
       <div style={{ height: 18 }} />
       {/* Circle */}
@@ -401,7 +478,10 @@ const InputNode = memo(function InputNode({ data }: NodeProps<InputEditorNode>) 
   );
 });
 
-const OperationNode = memo(function OperationNode({ data }: NodeProps<OperationEditorNode>) {
+const OperationNode = memo(function OperationNode({ id, data, selected }: NodeProps<OperationEditorNode>) {
+  const editor = useGraphEditor();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const toolbarPos = useToolbarPosition(nodeRef);
   const op = data.op ?? DEFAULT_OPERATION;
   const arity = getOperationArity(op);
   const symbol = OPERATION_LABELS[op];
@@ -424,7 +504,37 @@ const OperationNode = memo(function OperationNode({ data }: NodeProps<OperationE
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
+          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold uppercase text-slate-400">Operation</label>
+          <select className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={op} onChange={(e) => editor.updateOperation(id, e.target.value as SupportedOperation)}>
+            {Object.entries(OPERATION_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{value} · {label}</option>
+            ))}
+          </select>
+        </div>
+        {op === "pow" && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase text-slate-400">Exponent</label>
+            <input type="number" step="any" className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.parameter ?? 2} onChange={(e) => editor.updateParameter(id, Number(e.target.value))} />
+          </div>
+        )}
+        <div className="mt-1 space-y-1 text-xs">
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Data</span>
+            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          </div>
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Grad</span>
+            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          </div>
+        </div>
+      </NodeToolbar>
       <div style={{ height: 18 }} />
       <div style={{ ...circleStyle }}>
         <span><InlineMath math={mathStr} /></span>
@@ -461,9 +571,29 @@ const OperationNode = memo(function OperationNode({ data }: NodeProps<OperationE
   );
 });
 
-const OutputNode = memo(function OutputNode({ data }: NodeProps<OutputEditorNode>) {
+const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<OutputEditorNode>) {
+  const editor = useGraphEditor();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const toolbarPos = useToolbarPosition(nodeRef);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <NodeToolbar isVisible={selected} position={toolbarPos} className="flex w-40 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-xl">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
+          <input className="nodrag w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 outline-none focus:border-indigo-500" value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
+        </div>
+        <div className="mt-1 space-y-1 text-xs">
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Data</span>
+            <span className="font-mono text-emerald-400">{formatNumber(data.resultValue) || "—"}</span>
+          </div>
+          <div className="flex justify-between gap-4 rounded bg-slate-800 px-2 py-1">
+            <span className="text-slate-400">Grad</span>
+            <span className="font-mono text-rose-400">{formatNumber(data.grad) || "—"}</span>
+          </div>
+        </div>
+      </NodeToolbar>
       {/* Empty space for alignment */}
       <div style={{ height: 22 }} />
       <div style={{ ...circleStyle, borderColor: "#f59e0b", background: "#422006", width: 36, height: 36 }}>
@@ -517,12 +647,9 @@ function PracticeCanvas() {
     [setEdges, setNodes],
   );
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-
   const clearCanvas = useCallback(() => {
     setNodes([]);
     setEdges([]);
-    setSelectedNodeId(null);
     setStatus({ tone: "info", text: "Canvas cleared. Add nodes or load an example to start." });
   }, [setEdges, setNodes]);
 
@@ -846,22 +973,10 @@ function PracticeCanvas() {
     [edges, nodes, setEdges, setNodes],
   );
 
-  /* ── Selected-node editing panel ── */
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
-
-  const handleNodeClick = useCallback(
-    (_: React.MouseEvent, node: EditorNode) => {
-      setSelectedNodeId(node.id);
-    },
-    [],
-  );
-
-  const editor = editorContextValue;
-
   return (
     <GraphEditorContext.Provider value={editorContextValue}>
-      <div className="flex h-screen flex-col bg-slate-950 text-slate-100 lg:flex-row">
-        <aside className="w-full shrink-0 border-b border-slate-800 bg-slate-950/90 p-6 lg:h-screen lg:w-80 lg:border-b-0 lg:border-r lg:overflow-y-auto">
+      <div className="flex h-screen flex-col bg-slate-900 text-slate-100 lg:flex-row">
+        <aside className="w-full shrink-0 border-b border-white/5 bg-transparent p-6 lg:h-screen lg:w-80 lg:border-b-0 lg:border-r lg:overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700">
           <div className="mb-6">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.28em] text-violet-300">
               GraphGrad
@@ -874,10 +989,10 @@ function PracticeCanvas() {
           <div className="space-y-4">
             <ToneBanner status={status} />
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-white">Examples</h2>
+            <section className="py-2">
+              <h2 className="mb-3 text-sm font-bold text-slate-200">Examples</h2>
               <select
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-violet-400"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-500"
                 value={selectedExampleId}
                 onChange={(event) => {
                   const next = PRACTICE_EXAMPLES.find((example) => example.id === event.target.value);
@@ -894,23 +1009,23 @@ function PracticeCanvas() {
               </select>
             </section>
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-white">Build</h2>
+            <section className="py-2">
+              <h2 className="mb-3 text-sm font-bold text-slate-200">Build</h2>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  className="rounded-xl bg-emerald-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-400"
+                  className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
                   onClick={() => addNode("input")}
                 >
                   + Input
                 </button>
                 <button
-                  className="rounded-xl bg-violet-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-violet-400"
+                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
                   onClick={() => addNode("operation")}
                 >
                   + Op
                 </button>
                 <button
-                  className="rounded-xl bg-amber-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-300"
                   onClick={() => addNode("output")}
                   disabled={hasOutputNode}
                 >
@@ -919,133 +1034,38 @@ function PracticeCanvas() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-white">Run</h2>
+            <section className="py-2">
+              <h2 className="mb-3 text-sm font-bold text-slate-200">Run</h2>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  className="rounded-xl bg-sky-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-400"
+                  className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("forward")}
                 >
                   Forward
                 </button>
                 <button
-                  className="rounded-xl bg-fuchsia-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-fuchsia-400"
+                  className="rounded-xl bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
                   onClick={() => runEvaluation("backward")}
                 >
                   Backprop
                 </button>
                 <button
-                  className="rounded-xl bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-600"
+                  className="rounded-xl border border-slate-700 bg-transparent px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
                   onClick={() => resetComputedState()}
                 >
                   Clear
                 </button>
               </div>
               <button
-                className="mt-2 w-full rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20"
+                className="mt-2 w-full rounded-xl border border-rose-900/50 bg-transparent px-3 py-2 text-sm font-medium text-rose-400 transition hover:bg-rose-950/50"
                 onClick={clearCanvas}
               >
                 Clear Canvas
               </button>
             </section>
 
-            {/* Selected node editor */}
-            {selectedNode && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-                    Edit: <InlineMath math={selectedNode.data.label.replace(/(\d+)$/, "_{$1}")} />
-                  </h2>
-                  <button
-                    className="text-xs text-slate-400 hover:text-white"
-                    onClick={() => setSelectedNodeId(null)}
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
-                  Label
-                </label>
-                <input
-                  className="mb-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-violet-400"
-                  value={selectedNode.data.label}
-                  onChange={(e) => editor.updateLabel(selectedNode.id, e.target.value)}
-                />
-
-                {selectedNode.data.kind === "input" && (
-                  <>
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
-                      Value
-                    </label>
-                    <input
-                      className="mb-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-violet-400"
-                      type="number"
-                      step="any"
-                      value={selectedNode.data.value ?? 0}
-                      onChange={(e) => editor.updateValue(selectedNode.id, Number(e.target.value))}
-                    />
-                  </>
-                )}
-
-                {selectedNode.data.kind === "operation" && (
-                  <>
-                    <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
-                      Operation
-                    </label>
-                    <select
-                      className="mb-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-violet-400"
-                      value={selectedNode.data.op ?? DEFAULT_OPERATION}
-                      onChange={(e) =>
-                        editor.updateOperation(selectedNode.id, e.target.value as SupportedOperation)
-                      }
-                    >
-                      {Object.entries(OPERATION_LABELS).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {value} · {label}
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedNode.data.op === "pow" && (
-                      <>
-                        <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
-                          Exponent
-                        </label>
-                        <input
-                          className="mb-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-violet-400"
-                          type="number"
-                          step="any"
-                          value={selectedNode.data.parameter ?? 2}
-                          onChange={(e) =>
-                            editor.updateParameter(selectedNode.id, Number(e.target.value))
-                          }
-                        />
-                      </>
-                    )}
-                  </>
-                )}
-
-                {/* Computed values */}
-                <div className="mt-2 space-y-1 text-xs">
-                  <div className="flex justify-between rounded bg-slate-800 px-2 py-1">
-                    <span className="text-slate-400">Data</span>
-                    <span className="font-mono text-emerald-400">
-                      {formatNumber(selectedNode.data.resultValue) || "—"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between rounded bg-slate-800 px-2 py-1">
-                    <span className="text-slate-400">Grad</span>
-                    <span className="font-mono text-red-400">
-                      {formatNumber(selectedNode.data.grad) || "—"}
-                    </span>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
-              <h2 className="mb-2 text-sm font-semibold text-white">Legend</h2>
+            <section className="py-2 text-sm text-slate-300">
+              <h2 className="mb-2 text-sm font-bold text-slate-200">Legend</h2>
               <div className="space-y-1 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-4 rounded" style={{ background: "#22c55e" }} />
@@ -1057,7 +1077,7 @@ function PracticeCanvas() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-400">
-                Click a node to edit its properties in this panel.
+                Click a node to edit its properties inline.
               </p>
             </section>
           </div>
@@ -1070,7 +1090,6 @@ function PracticeCanvas() {
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
-            onNodeClick={handleNodeClick}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
