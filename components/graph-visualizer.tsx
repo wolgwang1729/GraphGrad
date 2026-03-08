@@ -56,6 +56,8 @@ import {
   type SupportedOperation,
 } from "@/lib/graph-types";
 
+import { parseEquationToGraph } from "@/lib/equation-parser";
+
 /* ─── Types ─── */
 
 type EditorNodeData = {
@@ -121,7 +123,7 @@ const OPERATION_MATH_LABELS: Record<SupportedOperation, string> = {
   exp: "\\exp",
   sigmoid: "\\sigma",
   max: "\\max",
-  log: "\\ln",
+  log: "\\operatorname{ln}",
 };
 
 /**
@@ -948,6 +950,7 @@ function VisualizerCanvas() {
     tone: "info",
     text: COMPUTATION_EXAMPLES[0].description,
   });
+  const [equation, setEquation] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
@@ -1163,6 +1166,56 @@ function VisualizerCanvas() {
     [fitGraphToVisibleArea, setEdges, setNodes],
   );
 
+  const handleGenerateEquation = useCallback(() => {
+    if (!equation.trim()) {
+      setStatus({ tone: "error", text: "Please enter an equation." });
+      return;
+    }
+    
+    try {
+      const result = parseEquationToGraph(equation);
+      setNodes(result.nodes.map(toEditorNode));
+      setEdges(result.edges.map(toEditorEdge));
+      // Format equation for display: convert 'relu' to '\operatorname{ReLU}' etc.
+      // Use the canonical labels from our operation map for consistency.
+      let displayEq = equation;
+      
+      // We want to replace any user-typed function name with its canonical LaTeX.
+      // We can use a combination of known aliases and SupportedOperations.
+      const replacements: Record<string, string> = {
+        // Direct SupportedOperation -> LaTeX
+        ...OPERATION_MATH_LABELS,
+        // Common aliases that mathjs/parser understands
+        "ln": "\\operatorname{ln}",
+        "multiply": "\\times",
+        "divide": "\\div",
+        "subtract": "-",
+        "add": "+",
+      };
+      
+      const sortedKeys = Object.keys(replacements).sort((a, b) => b.length - a.length);
+      
+      for (const key of sortedKeys) {
+        const mathLabel = replacements[key];
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        displayEq = displayEq.replace(regex, mathLabel);
+      }
+
+      setStatus({ 
+        tone: "success", 
+        text: `Successfully generated graph for: $$${displayEq}$$` 
+      });
+      
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          fitGraphToVisibleArea(400);
+        });
+      });
+    } catch (err: any) {
+      setStatus({ tone: "error", text: `Error generating graph: ${err.message}` });
+    }
+  }, [equation, setNodes, setEdges, fitGraphToVisibleArea]);
+
   const handleNodesChange = useCallback(
     (changes: NodeChange<EditorNode>[]) => {
       onNodesChange(changes);
@@ -1213,7 +1266,7 @@ function VisualizerCanvas() {
                 data: {
                   kind,
                   label: getNextInputLabel(base),
-                  value: 0,
+                  value: 1,
                   resultValue: null,
                   grad: null,
                 },
@@ -1491,6 +1544,34 @@ function VisualizerCanvas() {
                 ))}
               </select>
             </div>
+
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+
+            {/* Equation Input */}
+            <div>
+              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Equation to Graph:</h4>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. x + y * 2"
+                  className={`w-full rounded border px-3 py-2 text-[15px] font-mono outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
+                  value={equation}
+                  onChange={(e) => setEquation(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleGenerateEquation();
+                    }
+                  }}
+                />
+                <button
+                  className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-[15px] font-medium text-white transition hover:bg-indigo-500"
+                  onClick={handleGenerateEquation}
+                >
+                  Generate Graph
+                </button>
+              </div>
+            </div>
+            
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 

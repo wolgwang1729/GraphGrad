@@ -5,7 +5,7 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
     id: "mul-after-add",
     title: "Multiply after add",
     description:
-      String.raw`A classic example:$$f(x,y,z) = (x+y)z$$ Run backprop and see the gradients on the edges.`,
+      String.raw`A classic example:$$f(x,y,z) = (x+y)*z$$ Run backprop and see the gradients on the edges.`,
     nodes: [
       { id: "x", kind: "input", label: "x", value: -2, position: { x: 0, y: 0 } },
       { id: "y", kind: "input", label: "y", value: 5, position: { x: 0, y: 100 } },
@@ -67,7 +67,7 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
     id: "max-multiply",
     title: "Max and Multiply",
     description:
-      String.raw`A slightly more complex computation graph with a max operation: $$f(x,y,z,w) = (x \cdot y + \max(z, w)) \cdot 2$$`,
+      String.raw`A slightly more complex computation graph with a max operation: $$f(x,y,z,w) = (x * y + \max(z, w)) * 2$$`,
     nodes: [
       { id: "x", kind: "input", label: "x", value: 3.00, position: { x: 0, y: 0 } },
       { id: "y", kind: "input", label: "y", value: -4.00, position: { x: 0, y: 100 } },
