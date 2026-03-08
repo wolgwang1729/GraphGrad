@@ -22,6 +22,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
+  useNodesData,
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
@@ -33,6 +34,9 @@ import {
   useMemo,
   useState,
 } from "react";
+
+import "katex/dist/katex.min.css";
+import { InlineMath } from "react-katex";
 
 import { PRACTICE_EXAMPLES } from "@/lib/examples";
 import { evaluateGraph, type EvaluationMode } from "@/lib/graph-evaluator";
@@ -243,6 +247,7 @@ function serializeEdges(edges: EditorEdge[]): GraphEdgeSpec[] {
 
 function LabeledEdge({
   id,
+  source,
   sourceX,
   sourceY,
   targetX,
@@ -251,6 +256,8 @@ function LabeledEdge({
   data,
   style,
 }: EdgeProps<Edge<LabeledEdgeData>>) {
+  const sourceNodeData = useNodesData<EditorNode>(source);
+
   const midX = (sourceX + targetX) / 2;
   const isStraight = Math.abs(sourceY - targetY) < 1;
   const edgePath = isStraight 
@@ -259,7 +266,14 @@ function LabeledEdge({
   const labelX = isStraight ? (sourceX + targetX) / 2 : (sourceX + midX) / 2;
   const labelY = sourceY;
 
-  const forwardText = formatNumber(data?.forwardValue);
+  let forwardVal = data?.forwardValue;
+  if (forwardVal === null || forwardVal === undefined) {
+    if (sourceNodeData?.data?.kind === "input") {
+      forwardVal = sourceNodeData.data.value;
+    }
+  }
+
+  const forwardText = formatNumber(forwardVal);
   const gradText = formatNumber(data?.gradValue);
   const hasLabels = forwardText || gradText;
 
@@ -356,27 +370,26 @@ const handleStyle: React.CSSProperties = {
 };
 
 const InputNode = memo(function InputNode({ data }: NodeProps<InputEditorNode>) {
-  const displayValue = formatNumber(data.resultValue ?? data.value ?? null);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Label above */}
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 500,
-          color: "#e2e8f0",
-          height: 18,
-          lineHeight: "18px",
-          whiteSpace: "nowrap",
-          fontFamily: "monospace",
-        }}
-      >
-        {data.label}{" "}
-        <span style={{ color: "#4ade80" }}>{displayValue}</span>
-      </div>
+      {/* Empty space for alignment */}
+      <div style={{ height: 18 }} />
       {/* Circle */}
       <div style={{ ...circleStyle, borderColor: "#22c55e", background: "#052e16" }}>
+        {/* Label left */}
+        <div
+          style={{
+            position: "absolute",
+            right: "100%",
+            marginRight: 10,
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#e2e8f0",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <InlineMath math={data.label.replace(/(\d+)$/, "_{$1}")} />
+        </div>
         <span style={{ fontSize: 11 }}>●</span>
         <Handle
           type="source"
@@ -393,11 +406,28 @@ const OperationNode = memo(function OperationNode({ data }: NodeProps<OperationE
   const arity = getOperationArity(op);
   const symbol = OPERATION_LABELS[op];
 
+  let mathStr = "";
+  if (op === "pow") {
+    mathStr = `x^{${data.parameter ?? 2}}`;
+  } else {
+    mathStr = {
+      add: "+",
+      mul: "\\times",
+      sub: "-",
+      div: "\\div",
+      neg: "-",
+      relu: "\\text{ReLU}",
+      tanh: "\\tanh",
+      exp: "\\exp",
+      sigmoid: "\\sigma",
+    }[op] || symbol;
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ height: 18 }} />
       <div style={{ ...circleStyle }}>
-        <span>{symbol}</span>
+        <span><InlineMath math={mathStr} /></span>
       {arity === 1 ? (
         <Handle
           type="target"
@@ -432,24 +462,10 @@ const OperationNode = memo(function OperationNode({ data }: NodeProps<OperationE
 });
 
 const OutputNode = memo(function OutputNode({ data }: NodeProps<OutputEditorNode>) {
-  const fwdText = formatNumber(data.resultValue);
-  const gradText = formatNumber(data.grad);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Final values next to the node */}
-      <div
-        style={{
-          fontSize: 12,
-          fontFamily: "monospace",
-          height: 22,
-          lineHeight: "22px",
-          whiteSpace: "nowrap",
-          textAlign: "center",
-        }}
-      >
-        {fwdText ? <span style={{ color: "#22c55e" }}>{fwdText}</span> : " "}
-      </div>
+      {/* Empty space for alignment */}
+      <div style={{ height: 22 }} />
       <div style={{ ...circleStyle, borderColor: "#f59e0b", background: "#422006", width: 36, height: 36 }}>
         <span style={{ fontSize: 9 }}>●</span>
         <Handle
@@ -458,18 +474,6 @@ const OutputNode = memo(function OutputNode({ data }: NodeProps<OutputEditorNode
           position={Position.Left}
           style={handleStyle}
         />
-      </div>
-      <div
-        style={{
-          fontSize: 12,
-          fontFamily: "monospace",
-          height: 22,
-          lineHeight: "22px",
-          whiteSpace: "nowrap",
-          textAlign: "center",
-        }}
-      >
-        {gradText ? <span style={{ color: "#ef4444" }}>{gradText}</span> : " "}
       </div>
     </div>
   );
@@ -949,8 +953,8 @@ function PracticeCanvas() {
             {selectedNode && (
               <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-white">
-                    Edit: {selectedNode.data.label}
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+                    Edit: <InlineMath math={selectedNode.data.label.replace(/(\d+)$/, "_{$1}")} />
                   </h2>
                   <button
                     className="text-xs text-slate-400 hover:text-white"
