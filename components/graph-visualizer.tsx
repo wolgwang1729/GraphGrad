@@ -106,7 +106,7 @@ const DEFAULT_STATUS: StatusState = {
 };
 
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
-const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4" };
+const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4", markerEnd: "url(#graphgrad-edge-arrow-active)" };
 const EDGE_TARGET_GAP_PX = -4;
 const STRAIGHT_EDGE_TARGET_GAP_PX = -2;
 
