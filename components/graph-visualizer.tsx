@@ -89,6 +89,7 @@ type EditorContextValue = {
   updateValue: (nodeId: string, value: number) => void;
   updateOperation: (nodeId: string, op: SupportedOperation) => void;
   updateParameter: (nodeId: string, parameter: number) => void;
+  showError: (message: string) => void;
 };
 
 type StatusTone = "info" | "success" | "error";
@@ -625,6 +626,7 @@ function getTargetHandleStyle(isDarkMode: boolean, isConnected: boolean): React.
     border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
     boxShadow: "none",
     transition: "opacity 0.1s ease-in-out",
+    cursor: "crosshair",
   };
 }
 
@@ -993,12 +995,15 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
             type="target"
             id="a"
             position={Position.Left}
+            isConnectableStart={false}
+            //You can't draw an arrow to the output of something. Start your connection from an output handle (right side) instead."
             style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA), top: "30%" }}
           />
           <Handle
             type="target"
             id="b"
             position={Position.Left}
+            isConnectableStart={false}
             style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedB), top: "70%" }}
           />
         </>
@@ -1074,6 +1079,8 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
           type="target"
           id="in"
           position={Position.Left}
+          isConnectableStart={false}
+          onPointerDown={() => editor.showError("You can't draw an arrow to the output of something. Start your connection from an output handle (right side) instead.")}
           style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnected), top: "50%" }}
         />
       </div>
@@ -1290,6 +1297,10 @@ function VisualizerCanvas() {
     [setEdges, setNodes],
   );
 
+  const showError = useCallback((message: string) => {
+    setStatus({ tone: "error", text: message });
+  }, []);
+
   const editorContextValue = useMemo<EditorContextValue>(
     () => ({
       isDarkMode,
@@ -1297,8 +1308,9 @@ function VisualizerCanvas() {
       updateValue,
       updateOperation,
       updateParameter,
+      showError,
     }),
-    [isDarkMode, updateLabel, updateOperation, updateParameter, updateValue],
+    [isDarkMode, updateLabel, updateOperation, updateParameter, updateValue, showError],
   );
 
   const loadExample = useCallback(
