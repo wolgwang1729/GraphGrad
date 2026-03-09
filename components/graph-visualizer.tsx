@@ -765,7 +765,7 @@ const OperationSelect = memo(function OperationSelect({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className={`nodrag flex w-full items-center justify-between rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
+        className={`nodrag cursor-pointer flex w-full items-center justify-between rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
         onClick={() => setIsOpen((current) => !current)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -797,7 +797,7 @@ const OperationSelect = memo(function OperationSelect({
                 type="button"
                 role="option"
                 aria-selected={optionValue === value}
-                className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition ${optionValue === value
+                className={`flex w-full cursor-pointer items-center justify-between px-2 py-1.5 text-left text-xs transition ${optionValue === value
                   ? isDarkMode
                     ? "bg-slate-800 text-white"
                     : "bg-slate-100 text-slate-900"
@@ -841,7 +841,13 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-      onClick={() => setWasDragged(false)}
+      onClick={() => {
+        if (selected) {
+          setWasDragged(!wasDragged);
+        } else {
+          setWasDragged(false);
+        }
+      }}
     >
       <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
@@ -931,7 +937,13 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-      onClick={() => setWasDragged(false)}
+      onClick={() => {
+        if (selected) {
+          setWasDragged(!wasDragged);
+        } else {
+          setWasDragged(false);
+        }
+      }}
     >
       <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
@@ -1046,7 +1058,13 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-      onClick={() => setWasDragged(false)}
+      onClick={() => {
+        if (selected) {
+          setWasDragged(!wasDragged);
+        } else {
+          setWasDragged(false);
+        }
+      }}
     >
       <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
@@ -1664,7 +1682,7 @@ function VisualizerCanvas() {
         {/* Theme Toggle Button */}
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${isDarkMode
+          className={`absolute top-3 right-3 z-30 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${isDarkMode
             ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
             : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
@@ -1682,7 +1700,7 @@ function VisualizerCanvas() {
           {/* Card Header */}
           <div className={`border-b px-4 pt-4 pb-0 transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
             <button
-              className={`float-right text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
+              className={`float-right cursor-pointer text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{ transform: isSidebarOpen ? "rotate(0deg)" : "rotate(-180deg)" }}
               aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
@@ -1737,13 +1755,13 @@ function VisualizerCanvas() {
               <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Nodes:</h4>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
-                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
                   onClick={() => addNode("input")}
                 >
                   + Input
                 </button>
                 <button
-                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
                   onClick={() => addNode("operation")}
                 >
                   + Op
@@ -1753,7 +1771,7 @@ function VisualizerCanvas() {
                   title={hasOutputNode ? "There can be only one out node." : "Add an output node."}
                 >
                   <button
-                    className="w-full rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => addNode("output")}
                     disabled={hasOutputNode}
                     aria-label={hasOutputNode ? "There can be only one out node" : "Add an output node"}
@@ -1763,7 +1781,7 @@ function VisualizerCanvas() {
                 </span>
               </div>
             </div>
-            <ul className={`mt-4 space-y-1.5 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <ul className={`mt-2 space-y-0.5 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
               <li className="flex gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500/60" />
                 <span>Click a node to edit its properties inline.</span>
@@ -1781,25 +1799,25 @@ function VisualizerCanvas() {
               <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Evaluation:</h4>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
-                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("forward")}
                 >
                   Forward
                 </button>
                 <button
-                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("backward")}
                 >
                   Backprop
                 </button>
                 <button
-                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-red-500 hover:text-red-500" : "border-slate-300 text-slate-600 hover:border-red-500 hover:text-red-500"}`}
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] cursor-pointer transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-red-500 hover:text-red-500" : "border-slate-300 text-slate-600 hover:border-red-500 hover:text-red-500"}`}
                   onClick={() => resetComputedState()}
                 >
                   Clear Values
                 </button>
                 <button
-                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] cursor-pointer transition bg-transparent ${isDarkMode
                     ? "border-red-500/30 text-red-400/80 hover:bg-red-500 hover:text-white hover:border-red-500"
                     : "border-red-200 text-red-600/80 hover:bg-red-500 hover:text-white hover:border-red-500"
                     }`}
@@ -1829,7 +1847,7 @@ function VisualizerCanvas() {
                   }}
                 />
                 <button
-                  className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-[15px] font-medium text-white transition hover:bg-indigo-500"
+                  className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-[15px] cursor-pointer font-medium text-white transition hover:bg-indigo-500"
                   onClick={handleGenerateEquation}
                 >
                   Generate Graph
