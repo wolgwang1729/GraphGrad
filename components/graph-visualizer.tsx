@@ -8,6 +8,7 @@ import {
   BaseEdge,
   ControlButton,
   Controls,
+  EdgeLabelRenderer,
   Handle,
   NodeToolbar,
   type Connection,
@@ -197,7 +198,7 @@ function formatNumber(value: number | null | undefined): string {
   }
 
   if (!Number.isFinite(value)) {
-    return value > 0 ? "+∞" : "−∞";
+    return value > 0 ? "\\infty" : "−\\infty";
   }
 
   return value.toFixed(2);
@@ -425,42 +426,34 @@ function LabeledEdge({
     <>
       <BaseEdge id={id} path={edgePath} style={style} />
       {hasLabels && (
-        <>
+        <EdgeLabelRenderer>
           {forwardText && (
-            <text
-              x={labelX}
-              y={labelY - 8}
-              textAnchor="middle"
-              dominantBaseline="auto"
+            <div
               style={{
-                fontSize: 11,
-                fontFamily: "monospace",
-                fill: "#22c55e",
-                fontWeight: 500,
+                position: "absolute",
+                transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 10}px)`,
                 pointerEvents: "none",
+                fontSize: 11,
               }}
+              className="nodrag nopan"
             >
-              {forwardText}
-            </text>
+              <InlineMath math={`\\textcolor{#22c55e}{${forwardText}}`} />
+            </div>
           )}
           {gradText && (
-            <text
-              x={labelX}
-              y={labelY + 16}
-              textAnchor="middle"
-              dominantBaseline="auto"
+            <div
               style={{
-                fontSize: 11,
-                fontFamily: "monospace",
-                fill: "#ef4444",
-                fontWeight: 500,
+                position: "absolute",
+                transform: `translate(-50%, -50%) translate(${labelX}px,${labelY + 13}px)`,
                 pointerEvents: "none",
+                fontSize: 11,
               }}
+              className="nodrag nopan"
             >
-              {gradText}
-            </text>
+              <InlineMath math={`\\textcolor{#ef4444}{${gradText}}`} />
+            </div>
           )}
-        </>
+        </EdgeLabelRenderer>
       )}
     </>
   );
