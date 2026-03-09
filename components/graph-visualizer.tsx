@@ -108,6 +108,7 @@ const DEFAULT_STATUS: StatusState = {
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
 const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4" };
 const EDGE_TARGET_GAP_PX = -4;
+const STRAIGHT_EDGE_TARGET_GAP_PX = -2;
 
 const FIT_VIEW_PADDING = 0.2;
 const SIDEBAR_RESERVED_WIDTH_PX = 430;
@@ -411,14 +412,15 @@ function LabeledEdge({
   const markerEnd = strokeColor === "#475569"
     ? "url(#graphgrad-edge-arrow-muted)"
     : "url(#graphgrad-edge-arrow-active)";
-  const targetGap = EDGE_TARGET_GAP_PX;
+  const isStraight = Math.abs(sourceY - targetY) < 1.5;
+  const targetGap = isStraight ? STRAIGHT_EDGE_TARGET_GAP_PX : EDGE_TARGET_GAP_PX;
 
   function getShortenedTargetPoint(startX: number, startY: number, endX: number, endY: number) {
     const dx = endX - startX;
     const dy = endY - startY;
     const length = Math.hypot(dx, dy);
 
-    if (length <= targetGap || length === 0) {
+    if (length <= Math.abs(targetGap) || length === 0) {
       return { x: endX, y: endY };
     }
 
@@ -430,7 +432,6 @@ function LabeledEdge({
   }
 
   const midX = (sourceX + targetX) / 2;
-  const isStraight = Math.abs(sourceY - targetY) < 1;
   const shortenedTarget = isStraight
     ? getShortenedTargetPoint(sourceX, sourceY, targetX, targetY)
     : getShortenedTargetPoint(midX, sourceY, targetX, targetY);
@@ -871,7 +872,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
         <Handle
           type="source"
           position={Position.Right}
-          style={getSourceHandleStyle(editor.isDarkMode)}
+          style={{ ...getSourceHandleStyle(editor.isDarkMode), top: "50%" }}
         />
       </div>
     </div>
@@ -979,7 +980,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
       <Handle
         type="source"
         position={Position.Right}
-        style={getSourceHandleStyle(editor.isDarkMode)}
+        style={{ ...getSourceHandleStyle(editor.isDarkMode), top: "50%" }}
       />
       </div>
     </div>
@@ -1034,7 +1035,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
           type="target"
           id="in"
           position={Position.Left}
-          style={getTargetHandleStyle(editor.isDarkMode, isConnected)}
+          style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnected), top: "50%" }}
         />
       </div>
     </div>

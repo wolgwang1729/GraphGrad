@@ -197,6 +197,7 @@ export function parseEquationToGraph(
       id: generateId(`e-${rootPos.id}-${outputId}`),
       source: rootPos.id,
       target: outputId,
+      targetHandle: "in",
     });
 
     // Simple layout adjustment:
