@@ -96,15 +96,15 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
     id: "two-layer-mlp",
     title: "Two-Layer MLP (XOR)",
     description:
-      String.raw`A complete two-layer neural network capable of solving the XOR problem. It features a hidden layer with two ReLU neurons and a Sigmoid output neuron. $$f(x_1, x_2) = \sigma\Big(v_1 \text{ReLU}(w_{11} x_1 + w_{21} x_2 + b_1) + v_2 \text{ReLU}(w_{12} x_1 + w_{22} x_2 + b_2) + b_3\Big)$$`,
+      String.raw`A complete two-layer neural network capable of solving the XOR problem. It features a hidden layer with two ReLU neurons and a Sigmoid output neuron. $$f(x_1, x_2) = \sigma\Big(w^{(2)}_1 \text{ReLU}(w^{(1)}_{11} x_1 + w^{(1)}_{21} x_2 + b^{(1)}_1) + w^{(2)}_2 \text{ReLU}(w^{(1)}_{12} x_1 + w^{(1)}_{22} x_2 + b^{(1)}_2) + b^{(2)}\Big)$$`,
     nodes: [
       // Inputs & L1 Weights (X=0)
-      { id: "w11", kind: "input", label: "w_{11}", value: 1.0, position: { x: 0, y: 40.0 } },
+      { id: "w11", kind: "input", label: "w^{(1)}_{11}", value: 1.0, position: { x: 0, y: 40.0 } },
       { id: "x1", kind: "input", label: "x_1", value: 1.0, position: { x: 0, y: 120.0 } },
-      { id: "w21", kind: "input", label: "w_{21}", value: 1.0, position: { x: 0, y: 200.0 } },
+      { id: "w21", kind: "input", label: "w^{(1)}_{21}", value: 1.0, position: { x: 0, y: 200.0 } },
       { id: "x2", kind: "input", label: "x_2", value: 0.0, position: { x: 0, y: 280.0 } },
-      { id: "w12", kind: "input", label: "w_{12}", value: -1.0, position: { x: 0, y: 375.0 } },
-      { id: "w22", kind: "input", label: "w_{22}", value: 1.0, position: { x: 0, y: 440.0 } },
+      { id: "w12", kind: "input", label: "w^{(1)}_{12}", value: -1.0, position: { x: 0, y: 375.0 } },
+      { id: "w22", kind: "input", label: "w^{(1)}_{22}", value: 1.0, position: { x: 0, y: 440.0 } },
 
       // Layer 1 Multiplications (X=150)
       { id: "mul11", kind: "operation", label: "", op: "mul", position: { x: 150, y: 48.8 } },
@@ -114,17 +114,17 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
 
       // Layer 1 Additions & Bias (X=300 & X=450)
       { id: "add_h1_1", kind: "operation", label: "", op: "add", position: { x: 300, y: 57.6 } },
-      { id: "b1", kind: "input", label: "b_1", value: -0.5, position: { x: 300, y: 150.0 } },
+      { id: "b1", kind: "input", label: "b_1^{(1)}", value: -0.5, position: { x: 350, y: 150.0 } },
       { id: "add_h2_1", kind: "operation", label: "", op: "add", position: { x: 300, y: 377.6 } },
-      { id: "b2", kind: "input", label: "b_2", value: -1.5, position: { x: 300, y: 480.0 } },
+      { id: "b2", kind: "input", label: "b_2^{(1)}", value: -1.5, position: { x: 350, y: 480.0 } },
 
       { id: "add_h1_b", kind: "operation", label: "", op: "add", position: { x: 450, y: 66.4 } },
       { id: "add_h2_b", kind: "operation", label: "", op: "add", position: { x: 450, y: 386.4 } },
 
       // Layer 1 Activations & L2 Weights (X=600)
       { id: "relu1", kind: "operation", label: "", op: "relu", position: { x: 600, y: 66.4 } },
-      { id: "v1", kind: "input", label: "v_1", value: 2.0, position: { x: 600, y: 250.0 } },
-      { id: "v2", kind: "input", label: "v_2", value: -4.0, position: { x: 600, y: 321.2 } },
+      { id: "v1", kind: "input", label: "w_1^{(2)}", value: 2.0, position: { x: 600, y: 250.0 } },
+      { id: "v2", kind: "input", label: "w_2^{(2)}", value: -4.0, position: { x: 600, y: 321.2 } },
       { id: "relu2", kind: "operation", label: "", op: "relu", position: { x: 600, y: 386.4 } },
 
       // Layer 2 Operations (X=750 to X=1050)
@@ -132,7 +132,7 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
       { id: "mul_v2", kind: "operation", label: "", op: "mul", position: { x: 750, y: 330.0 } },
       
       { id: "add_out_1", kind: "operation", label: "", op: "add", position: { x: 900, y: 250.0 } },
-      { id: "b3", kind: "input", label: "b_3", value: -1.0, position: { x: 900, y: 360.0 } },
+      { id: "b3", kind: "input", label: "b^{(2)}_1", value: -1.0, position: { x: 900, y: 360.0 } },
       
       { id: "add_out_b", kind: "operation", label: "", op: "add", position: { x: 1050, y: 258.8 } },
 
