@@ -849,7 +849,12 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
         }
       }}
     >
-      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+      <NodeToolbar
+        isVisible={selected && !dragging && !wasDragged}
+        position={toolbarPos}
+        className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
@@ -945,7 +950,12 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
         }
       }}
     >
-      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+      <NodeToolbar
+        isVisible={selected && !dragging && !wasDragged}
+        position={toolbarPos}
+        className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
@@ -1066,7 +1076,12 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
         }
       }}
     >
-      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+      <NodeToolbar
+        isVisible={selected && !dragging && !wasDragged}
+        position={toolbarPos}
+        className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />

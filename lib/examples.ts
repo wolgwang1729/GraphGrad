@@ -103,7 +103,7 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
       { id: "x1", kind: "input", label: "x_1", value: 1.0, position: { x: 0, y: 120.0 } },
       { id: "w21", kind: "input", label: "w_{21}", value: 1.0, position: { x: 0, y: 200.0 } },
       { id: "x2", kind: "input", label: "x_2", value: 0.0, position: { x: 0, y: 280.0 } },
-      { id: "w12", kind: "input", label: "w_{12}", value: -1.0, position: { x: 0, y: 360.0 } },
+      { id: "w12", kind: "input", label: "w_{12}", value: -1.0, position: { x: 0, y: 375.0 } },
       { id: "w22", kind: "input", label: "w_{22}", value: 1.0, position: { x: 0, y: 440.0 } },
 
       // Layer 1 Multiplications (X=150)
@@ -123,7 +123,7 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
 
       // Layer 1 Activations & L2 Weights (X=600)
       { id: "relu1", kind: "operation", label: "", op: "relu", position: { x: 600, y: 66.4 } },
-      { id: "v1", kind: "input", label: "v_1", value: 2.0, position: { x: 600, y: 232.4 } },
+      { id: "v1", kind: "input", label: "v_1", value: 2.0, position: { x: 600, y: 250.0 } },
       { id: "v2", kind: "input", label: "v_2", value: -4.0, position: { x: 600, y: 321.2 } },
       { id: "relu2", kind: "operation", label: "", op: "relu", position: { x: 600, y: 386.4 } },
 
@@ -146,8 +146,8 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
       { id: "e_x1_mul11", source: "x1", target: "mul11", targetHandle: "b" },
       { id: "e_w21_mul21", source: "w21", target: "mul21", targetHandle: "a" },
       { id: "e_x2_mul21", source: "x2", target: "mul21", targetHandle: "b" },
-      { id: "e_w12_mul12", source: "w12", target: "mul12", targetHandle: "a" },
-      { id: "e_x1_mul12", source: "x1", target: "mul12", targetHandle: "b" },
+      { id: "e_w12_mul12", source: "w12", target: "mul12", targetHandle: "b" },
+      { id: "e_x1_mul12", source: "x1", target: "mul12", targetHandle: "a" },
       { id: "e_w22_mul22", source: "w22", target: "mul22", targetHandle: "a" },
       { id: "e_x2_mul22", source: "x2", target: "mul22", targetHandle: "b" },
 
@@ -166,8 +166,8 @@ export const COMPUTATION_EXAMPLES: ComputationExample[] = [
       { id: "e_add2b_relu2", source: "add_h2_b", target: "relu2", targetHandle: "a" },
 
       // L2 connections
-      { id: "e_v1_mulv1", source: "v1", target: "mul_v1", targetHandle: "a" },
-      { id: "e_relu1_mulv1", source: "relu1", target: "mul_v1", targetHandle: "b" },
+      { id: "e_v1_mulv1", source: "v1", target: "mul_v1", targetHandle: "b" },
+      { id: "e_relu1_mulv1", source: "relu1", target: "mul_v1", targetHandle: "a" },
       { id: "e_v2_mulv2", source: "v2", target: "mul_v2", targetHandle: "a" },
       { id: "e_relu2_mulv2", source: "relu2", target: "mul_v2", targetHandle: "b" },
 

@@ -107,3 +107,4 @@ https://graphgrad.vercel.app/
 
 - The autodiff and backpropagation learning approach is adapted from Andrej Karpathy's micrograd: https://github.com/karpathy/micrograd/tree/master
 - The website UI is inspired by Alex Lenail's NN-SVG visualization style: https://alexlenail.me/NN-SVG/AlexNet.html
+- Some examples are taken from the CS231 course.
