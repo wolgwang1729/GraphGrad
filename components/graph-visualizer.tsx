@@ -106,6 +106,8 @@ const DEFAULT_STATUS: StatusState = {
 
 const EDGE_BASE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5 };
 const DRAGGING_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 1.5, strokeDasharray: "4 4" };
+const EDGE_TARGET_GAP_PX = -4;
+
 const FIT_VIEW_PADDING = 0.2;
 const SIDEBAR_RESERVED_WIDTH_PX = 430;
 const SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX = 0;
@@ -394,6 +396,7 @@ function serializeEdges(edges: EditorEdge[]): GraphEdgeSpec[] {
 function LabeledEdge({
   id,
   source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -402,12 +405,37 @@ function LabeledEdge({
   style,
 }: EdgeProps<Edge<LabeledEdgeData>>) {
   const sourceNodeData = useNodesData<EditorNode>(source);
+  const targetNodeData = useNodesData<EditorNode>(target);
+  const strokeColor = typeof style?.stroke === "string" ? style.stroke : EDGE_BASE_STYLE.stroke;
+  const markerEnd = strokeColor === "#475569"
+    ? "url(#graphgrad-edge-arrow-muted)"
+    : "url(#graphgrad-edge-arrow-active)";
+  const targetGap = EDGE_TARGET_GAP_PX;
+
+  function getShortenedTargetPoint(startX: number, startY: number, endX: number, endY: number) {
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const length = Math.hypot(dx, dy);
+
+    if (length <= targetGap || length === 0) {
+      return { x: endX, y: endY };
+    }
+
+    const scale = (length - targetGap) / length;
+    return {
+      x: startX + dx * scale,
+      y: startY + dy * scale,
+    };
+  }
 
   const midX = (sourceX + targetX) / 2;
   const isStraight = Math.abs(sourceY - targetY) < 1;
+  const shortenedTarget = isStraight
+    ? getShortenedTargetPoint(sourceX, sourceY, targetX, targetY)
+    : getShortenedTargetPoint(midX, sourceY, targetX, targetY);
   const edgePath = isStraight 
-    ? `M ${sourceX},${sourceY} L ${targetX},${targetY}` 
-    : `M ${sourceX},${sourceY} L ${midX},${sourceY} L ${targetX},${targetY}`;
+    ? `M ${sourceX},${sourceY} L ${shortenedTarget.x},${shortenedTarget.y}` 
+    : `M ${sourceX},${sourceY} L ${midX},${sourceY} L ${shortenedTarget.x},${shortenedTarget.y}`;
   const labelX = isStraight ? (sourceX + targetX) / 2 : (sourceX + midX) / 2;
   const labelY = sourceY;
 
@@ -424,7 +452,7 @@ function LabeledEdge({
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={style} />
+      <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} />
       {hasLabels && (
         <EdgeLabelRenderer>
           {forwardText && (
@@ -462,6 +490,51 @@ function LabeledEdge({
 const edgeTypes: EdgeTypes = {
   labeledEdge: LabeledEdge,
 };
+
+function EdgeMarkers() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute h-0 w-0"
+      focusable="false"
+    >
+      <defs>
+        <marker
+          id="graphgrad-edge-arrow-active"
+          markerWidth="9"
+          markerHeight="9"
+          refX="7.7"
+          refY="4.5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path
+            d="M 0.9 0.95 L 7.7 4.5 L 0.9 8.05 L 2.35 4.5 Z"
+            fill="#94a3b8"
+            stroke="#94a3b8"
+            strokeLinejoin="round"
+          />
+        </marker>
+        <marker
+          id="graphgrad-edge-arrow-muted"
+          markerWidth="9"
+          markerHeight="9"
+          refX="7.7"
+          refY="4.5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path
+            d="M 0.9 0.95 L 7.7 4.5 L 0.9 8.05 L 2.35 4.5 Z"
+            fill="#475569"
+            stroke="#475569"
+            strokeLinejoin="round"
+          />
+        </marker>
+      </defs>
+    </svg>
+  );
+}
 
 /* ─── Status Banner ─── */
 
@@ -541,12 +614,24 @@ function getCircleStyle(isDarkMode: boolean): React.CSSProperties {
   };
 }
 
-function getHandleStyle(isDarkMode: boolean): React.CSSProperties {
+function getTargetHandleStyle(): React.CSSProperties {
+  return {
+    width: 8,
+    height: 8,
+    opacity: 0,
+    backgroundColor: "transparent",
+    border: "none",
+    boxShadow: "none",
+  };
+}
+
+function getSourceHandleStyle(isDarkMode: boolean): React.CSSProperties {
   return {
     width: 8,
     height: 8,
     backgroundColor: isDarkMode ? "#94a3b8" : "#cbd5e1",
     border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
+    boxShadow: "none",
   };
 }
 
@@ -784,7 +869,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
         <Handle
           type="source"
           position={Position.Right}
-          style={getHandleStyle(editor.isDarkMode)}
+          style={getSourceHandleStyle(editor.isDarkMode)}
         />
       </div>
     </div>
@@ -867,7 +952,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
           type="target"
           id="a"
           position={Position.Left}
-          style={{ ...getHandleStyle(editor.isDarkMode), top: "50%" }}
+          style={{ ...getTargetHandleStyle(), top: "50%" }}
         />
       ) : (
         <>
@@ -875,20 +960,20 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
             type="target"
             id="a"
             position={Position.Left}
-            style={{ ...getHandleStyle(editor.isDarkMode), top: "30%" }}
+            style={{ ...getTargetHandleStyle(), top: "30%" }}
           />
           <Handle
             type="target"
             id="b"
             position={Position.Left}
-            style={{ ...getHandleStyle(editor.isDarkMode), top: "70%" }}
+            style={{ ...getTargetHandleStyle(), top: "70%" }}
           />
         </>
       )}
       <Handle
         type="source"
         position={Position.Right}
-        style={getHandleStyle(editor.isDarkMode)}
+        style={getSourceHandleStyle(editor.isDarkMode)}
       />
       </div>
     </div>
@@ -940,7 +1025,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
           type="target"
           id="in"
           position={Position.Left}
-          style={getHandleStyle(editor.isDarkMode)}
+          style={getTargetHandleStyle()}
         />
       </div>
     </div>
@@ -1451,6 +1536,7 @@ function VisualizerCanvas() {
             edgesFocusable={!isLocked}
             className="h-full w-full"
           >
+            <EdgeMarkers />
             <Controls position="bottom-right" showFitView={false} showInteractive={false} className="bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]! sm:bottom-4!">
               <ControlButton onClick={() => fitGraphToVisibleArea(250)} title="Fit to screen" aria-label="Fit graph to screen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
