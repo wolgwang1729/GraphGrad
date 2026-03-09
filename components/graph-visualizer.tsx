@@ -1727,32 +1727,7 @@ function VisualizerCanvas() {
               </select>
             </div>
 
-            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
-            {/* Equation Input */}
-            <div>
-              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Equation to Graph:</h4>
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. x + y * 2"
-                  className={`w-full rounded border px-3 py-2 text-[15px] font-mono outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
-                  value={equation}
-                  onChange={(e) => setEquation(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleGenerateEquation();
-                    }
-                  }}
-                />
-                <button
-                  className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-[15px] font-medium text-white transition hover:bg-indigo-500"
-                  onClick={handleGenerateEquation}
-                >
-                  Generate Graph
-                </button>
-              </div>
-            </div>
 
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
@@ -1823,6 +1798,34 @@ function VisualizerCanvas() {
             </div>
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+
+            {/* Equation Input */}
+            <div>
+              <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Equation to Graph:</h4>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. x + y * 2"
+                  className={`w-full rounded border px-3 py-2 text-[15px] font-mono outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
+                  value={equation}
+                  onChange={(e) => setEquation(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleGenerateEquation();
+                    }
+                  }}
+                />
+                <button
+                  className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-[15px] font-medium text-white transition hover:bg-indigo-500"
+                  onClick={handleGenerateEquation}
+                >
+                  Generate Graph
+                </button>
+              </div>
+            </div>
+
+            <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+
 
             {/* Legend */}
             <div>
