@@ -1693,7 +1693,7 @@ function VisualizerCanvas() {
               GraphGrad
             </h1>
             <p className={`mb-4 text-[15px] font-light ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-              Computation Graph Visualizer. <a href="#" onClick={(e) => { e.preventDefault(); clearCanvas(); }} className={`hover:underline ${isDarkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-500"}`}>Clear Canvas</a>
+              Computation Graph Visualizer
             </p>
 
             {/* Simulated Tabs matching NN-SVG Nav Tabs */}
@@ -1743,7 +1743,7 @@ function VisualizerCanvas() {
                   + Input
                 </button>
                 <button
-                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
                   onClick={() => addNode("operation")}
                 >
                   + Op
@@ -1753,7 +1753,7 @@ function VisualizerCanvas() {
                   title={hasOutputNode ? "There can be only one out node." : "Add an output node."}
                 >
                   <button
-                    className={`w-full rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                    className="w-full rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => addNode("output")}
                     disabled={hasOutputNode}
                     aria-label={hasOutputNode ? "There can be only one out node" : "Add an output node"}
@@ -1763,19 +1763,23 @@ function VisualizerCanvas() {
                 </span>
               </div>
             </div>
-            <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Click a node to edit its properties inline.
-            </p>
-            <p className={`mt-1 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Drag from the end handle of one node to another node to create an edge.
-            </p>
+            <ul className={`mt-4 space-y-1.5 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500/60" />
+                <span>Click a node to edit its properties inline.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500/60" />
+                <span>Drag from the end handle of one node to another node to create an edge.</span>
+              </li>
+            </ul>
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
             {/* Evaluation */}
             <div>
               <h4 className={`mb-3 text-lg font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Evaluation:</h4>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("forward")}
@@ -1783,16 +1787,25 @@ function VisualizerCanvas() {
                   Forward
                 </button>
                 <button
-                  className={`rounded-sm px-3 py-1.5 text-[15px] transition ${isDarkMode ? "bg-slate-700 text-slate-200 hover:bg-slate-600" : "bg-slate-200 text-slate-800 hover:bg-slate-300"}`}
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
                   onClick={() => runEvaluation("backward")}
                 >
                   Backprop
                 </button>
                 <button
-                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-red-500 hover:text-red-500" : "border-slate-300 text-slate-600 hover:border-red-500 hover:text-red-500"}`}
                   onClick={() => resetComputedState()}
                 >
-                  Clear
+                  Clear Values
+                </button>
+                <button
+                  className={`rounded-sm border px-3 py-1.5 text-[15px] transition bg-transparent ${isDarkMode
+                    ? "border-red-500/30 text-red-400/80 hover:bg-red-500 hover:text-white hover:border-red-500"
+                    : "border-red-200 text-red-600/80 hover:bg-red-500 hover:text-white hover:border-red-500"
+                    }`}
+                  onClick={() => clearCanvas()}
+                >
+                  Clear Canvas
                 </button>
               </div>
             </div>
