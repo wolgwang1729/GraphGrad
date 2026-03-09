@@ -1097,7 +1097,7 @@ const nodeTypes: NodeTypes = {
 /* ─── Graph Canvas ─── */
 
 function VisualizerCanvas() {
-  const { fitView, getNodesBounds, setViewport } = useReactFlow();
+  const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorNode>(
     COMPUTATION_EXAMPLES[0].nodes.map(toEditorNode),
   );
@@ -1129,14 +1129,15 @@ function VisualizerCanvas() {
         return;
       }
 
+      const currentNodes = getNodes();
       const reservedWidth = getSidebarReservedWidth(window.innerWidth, isSidebarOpen);
 
-      if (nodes.length === 0) {
+      if (currentNodes.length === 0) {
         void fitView({ duration, ...fitViewConfig });
         return;
       }
 
-      const bounds = getNodesBounds(nodes);
+      const bounds = getNodesBounds(currentNodes);
       const visibleWidth = Math.max(window.innerWidth - reservedWidth, 320);
       const visibleHeight = Math.max(window.innerHeight - 20, 320);
       const viewport = getViewportForBounds(
@@ -1157,7 +1158,7 @@ function VisualizerCanvas() {
         { duration },
       );
     },
-    [fitView, fitViewConfig, getNodesBounds, isSidebarOpen, nodes, setViewport],
+    [fitView, fitViewConfig, getNodes, getNodesBounds, isSidebarOpen, setViewport],
   );
 
   useEffect(() => {
