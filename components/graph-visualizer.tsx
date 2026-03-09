@@ -85,6 +85,7 @@ type OutputEditorNode = Node<EditorNodeData, "outputNode">;
 
 type EditorContextValue = {
   isDarkMode: boolean;
+  isLocked: boolean;
   updateLabel: (nodeId: string, label: string) => void;
   updateValue: (nodeId: string, value: number) => void;
   updateOperation: (nodeId: string, op: SupportedOperation) => void;
@@ -319,27 +320,27 @@ function toEditorNode(spec: GraphNodeSpec): EditorNode {
     data:
       spec.kind === "input"
         ? {
+          kind: spec.kind,
+          label: spec.label,
+          value: spec.value,
+          resultValue: null,
+          grad: null,
+        }
+        : spec.kind === "operation"
+          ? {
             kind: spec.kind,
             label: spec.label,
-            value: spec.value,
+            op: spec.op,
+            parameter: spec.parameter,
             resultValue: null,
             grad: null,
           }
-        : spec.kind === "operation"
-          ? {
-              kind: spec.kind,
-              label: spec.label,
-              op: spec.op,
-              parameter: spec.parameter,
-              resultValue: null,
-              grad: null,
-            }
           : {
-              kind: spec.kind,
-              label: spec.label,
-              resultValue: null,
-              grad: null,
-            },
+            kind: spec.kind,
+            label: spec.label,
+            resultValue: null,
+            grad: null,
+          },
   };
 }
 
@@ -436,8 +437,8 @@ function LabeledEdge({
   const shortenedTarget = isStraight
     ? getShortenedTargetPoint(sourceX, sourceY, targetX, targetY)
     : getShortenedTargetPoint(midX, sourceY, targetX, targetY);
-  const edgePath = isStraight 
-    ? `M ${sourceX},${sourceY} L ${shortenedTarget.x},${shortenedTarget.y}` 
+  const edgePath = isStraight
+    ? `M ${sourceX},${sourceY} L ${shortenedTarget.x},${shortenedTarget.y}`
     : `M ${sourceX},${sourceY} L ${midX},${sourceY} L ${shortenedTarget.x},${shortenedTarget.y}`;
   const labelX = isStraight ? (sourceX + targetX) / 2 : (sourceX + midX) / 2;
   const labelY = sourceY;
@@ -617,7 +618,7 @@ function getCircleStyle(isDarkMode: boolean): React.CSSProperties {
   };
 }
 
-function getTargetHandleStyle(isDarkMode: boolean, isConnected: boolean): React.CSSProperties {
+function getTargetHandleStyle(isDarkMode: boolean, isConnected: boolean, isLocked: boolean): React.CSSProperties {
   return {
     width: 8,
     height: 8,
@@ -626,17 +627,18 @@ function getTargetHandleStyle(isDarkMode: boolean, isConnected: boolean): React.
     border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
     boxShadow: "none",
     transition: "opacity 0.1s ease-in-out",
-    cursor: "crosshair",
+    cursor: isLocked ? "default" : "crosshair",
   };
 }
 
-function getSourceHandleStyle(isDarkMode: boolean): React.CSSProperties {
+function getSourceHandleStyle(isDarkMode: boolean, isLocked: boolean): React.CSSProperties {
   return {
     width: 8,
     height: 8,
     backgroundColor: isDarkMode ? "#94a3b8" : "#cbd5e1",
     border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
     boxShadow: "none",
+    cursor: isLocked ? "default" : "crosshair",
   };
 }
 
@@ -802,7 +804,7 @@ const OperationSelect = memo(function OperationSelect({
                   : isDarkMode
                     ? "text-slate-200 hover:bg-slate-800"
                     : "text-slate-700 hover:bg-slate-50"
-                }`}
+                  }`}
                 onClick={() => {
                   onChange(optionValue);
                   setIsOpen(false);
@@ -836,8 +838,8 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
   }, [selected]);
 
   return (
-    <div 
-      ref={nodeRef} 
+    <div
+      ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       onClick={() => setWasDragged(false)}
     >
@@ -848,10 +850,10 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
         </div>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Value</label>
-          <SmartNumberInput 
-            className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} 
-            value={data.value ?? 0} 
-            onUpdate={(val) => editor.updateValue(id, val)} 
+          <SmartNumberInput
+            className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
+            value={data.value ?? 0}
+            onUpdate={(val) => editor.updateValue(id, val)}
           />
         </div>
         <div className="mt-1 space-y-1 text-xs">
@@ -887,7 +889,8 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
         <Handle
           type="source"
           position={Position.Right}
-          style={{ ...getSourceHandleStyle(editor.isDarkMode), top: "50%" }}
+          isConnectable={!editor.isLocked}
+          style={{ ...getSourceHandleStyle(editor.isDarkMode, editor.isLocked), top: "50%" }}
         />
       </div>
     </div>
@@ -925,8 +928,8 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
   }, [arity, id, op, updateNodeInternals]);
 
   return (
-    <div 
-      ref={nodeRef} 
+    <div
+      ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       onClick={() => setWasDragged(false)}
     >
@@ -947,10 +950,10 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
         {op === "pow" && (
           <div className="flex flex-col gap-1">
             <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Exponent</label>
-            <SmartNumberInput 
-              className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} 
-              value={data.parameter ?? 2} 
-              onUpdate={(val) => editor.updateParameter(id, val)} 
+            <SmartNumberInput
+              className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
+              value={data.parameter ?? 2}
+              onUpdate={(val) => editor.updateParameter(id, val)}
             />
           </div>
         )}
@@ -982,37 +985,41 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
           <InlineMath math={data.label} />
         </div>
         <span style={(op === "relu" || op === "tanh" || op === "exp" || op === "max" || op === "log") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
-      {arity === 1 ? (
-        <Handle
-          type="target"
-          id="a"
-          position={Position.Left}
-          style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA), top: "50%" }}
-        />
-      ) : (
-        <>
+        {arity === 1 ? (
           <Handle
             type="target"
             id="a"
             position={Position.Left}
-            isConnectableStart={false}
-            //You can't draw an arrow to the output of something. Start your connection from an output handle (right side) instead."
-            style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA), top: "30%" }}
+            isConnectable={!editor.isLocked}
+            style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA, editor.isLocked), top: "50%" }}
           />
-          <Handle
-            type="target"
-            id="b"
-            position={Position.Left}
-            isConnectableStart={false}
-            style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedB), top: "70%" }}
-          />
-        </>
-      )}
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ ...getSourceHandleStyle(editor.isDarkMode), top: "50%" }}
-      />
+        ) : (
+          <>
+            <Handle
+              type="target"
+              id="a"
+              position={Position.Left}
+              isConnectable={!editor.isLocked}
+              isConnectableStart={false}
+              //You can't draw an arrow to the output of something. Start your connection from an output handle (right side) instead."
+              style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA, editor.isLocked), top: "30%" }}
+            />
+            <Handle
+              type="target"
+              id="b"
+              position={Position.Left}
+              isConnectable={!editor.isLocked}
+              isConnectableStart={false}
+              style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedB, editor.isLocked), top: "70%" }}
+            />
+          </>
+        )}
+        <Handle
+          type="source"
+          position={Position.Right}
+          isConnectable={!editor.isLocked}
+          style={{ ...getSourceHandleStyle(editor.isDarkMode, editor.isLocked), top: "50%" }}
+        />
       </div>
     </div>
   );
@@ -1036,8 +1043,8 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
   const isConnected = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "in"), [edges, id]);
 
   return (
-    <div 
-      ref={nodeRef} 
+    <div
+      ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       onClick={() => setWasDragged(false)}
     >
@@ -1079,9 +1086,10 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
           type="target"
           id="in"
           position={Position.Left}
+          isConnectable={!editor.isLocked}
           isConnectableStart={false}
           onPointerDown={() => editor.showError("You can't draw an arrow to the output of something. Start your connection from an output handle (right side) instead.")}
-          style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnected), top: "50%" }}
+          style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnected, editor.isLocked), top: "50%" }}
         />
       </div>
     </div>
@@ -1119,7 +1127,7 @@ function VisualizerCanvas() {
       padding: FIT_VIEW_PADDING,
       minZoom: 0.35,
       maxZoom: 1.5,
-      }),
+    }),
     [],
   );
 
@@ -1305,13 +1313,14 @@ function VisualizerCanvas() {
   const editorContextValue = useMemo<EditorContextValue>(
     () => ({
       isDarkMode,
+      isLocked,
       updateLabel,
       updateValue,
       updateOperation,
       updateParameter,
       showError,
     }),
-    [isDarkMode, updateLabel, updateOperation, updateParameter, updateValue, showError],
+    [isDarkMode, isLocked, updateLabel, updateOperation, updateParameter, updateValue, showError],
   );
 
   const loadExample = useCallback(
@@ -1334,7 +1343,7 @@ function VisualizerCanvas() {
       setStatus({ tone: "error", text: "Please enter an equation." });
       return;
     }
-    
+
     try {
       const result = parseEquationToGraph(equation);
       setNodes(result.nodes.map(toEditorNode));
@@ -1342,7 +1351,7 @@ function VisualizerCanvas() {
       // Format equation for display: convert 'relu' to '\operatorname{ReLU}' etc.
       // Use the canonical labels from our operation map for consistency.
       let displayEq = equation;
-      
+
       // We want to replace any user-typed function name with its canonical LaTeX.
       // We can use a combination of known aliases and SupportedOperations.
       const replacements: Record<string, string> = {
@@ -1355,20 +1364,20 @@ function VisualizerCanvas() {
         "subtract": "-",
         "add": "+",
       };
-      
+
       const sortedKeys = Object.keys(replacements).sort((a, b) => b.length - a.length);
-      
+
       for (const key of sortedKeys) {
         const mathLabel = replacements[key];
         const regex = new RegExp(`\\b${key}\\b`, 'gi');
         displayEq = displayEq.replace(regex, mathLabel);
       }
 
-      setStatus({ 
-        tone: "success", 
-        text: `Successfully generated graph for: $$${displayEq}$$` 
+      setStatus({
+        tone: "success",
+        text: `Successfully generated graph for: $$${displayEq}$$`
       });
-      
+
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
           fitGraphToVisibleArea(400);
@@ -1423,41 +1432,41 @@ function VisualizerCanvas() {
         const newNode: EditorNode =
           kind === "input"
             ? {
+              id,
+              type: "inputNode",
+              position,
+              data: {
+                kind,
+                label: getNextInputLabel(base),
+                value: 1,
+                resultValue: null,
+                grad: null,
+              },
+            }
+            : kind === "operation"
+              ? {
                 id,
-                type: "inputNode",
+                type: "operationNode",
                 position,
                 data: {
                   kind,
-                  label: getNextInputLabel(base),
-                  value: 1,
+                  label: "",
+                  op: DEFAULT_OPERATION,
                   resultValue: null,
                   grad: null,
                 },
               }
-            : kind === "operation"
-              ? {
-                  id,
-                  type: "operationNode",
-                  position,
-                  data: {
-                    kind,
-                    label: "",
-                    op: DEFAULT_OPERATION,
-                    resultValue: null,
-                    grad: null,
-                  },
-                }
               : {
-                  id,
-                  type: "outputNode",
-                  position,
-                  data: {
-                    kind,
-                    label: "\\text{out}",
-                    resultValue: null,
-                    grad: null,
-                  },
-                };
+                id,
+                type: "outputNode",
+                position,
+                data: {
+                  kind,
+                  label: "\\text{out}",
+                  resultValue: null,
+                  grad: null,
+                },
+              };
 
         return [...base, newNode];
       });
@@ -1580,9 +1589,9 @@ function VisualizerCanvas() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={isLocked ? () => {} : handleNodesChange}
-            onEdgesChange={isLocked ? () => {} : handleEdgesChange}
-            onConnect={isLocked ? () => {} : onConnect}
+            onNodesChange={isLocked ? () => { } : handleNodesChange}
+            onEdgesChange={isLocked ? () => { } : handleEdgesChange}
+            onConnect={isLocked ? () => { } : onConnect}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitViewOptions={fitViewConfig}
@@ -1608,18 +1617,44 @@ function VisualizerCanvas() {
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
               </ControlButton>
-              <ControlButton onClick={() => setIsLocked(!isLocked)} title={isLocked ? "Unlock graph" : "Lock graph"} aria-label={isLocked ? "Unlock graph" : "Lock graph"}>
-                {isLocked ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-                  </svg>
-                )}
+              <ControlButton
+                onClick={() => setIsLocked(!isLocked)}
+                title={isLocked ? "Unlock graph" : "Lock graph"}
+                aria-label={isLocked ? "Unlock graph" : "Lock graph"}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={isLocked ? "2" : "1.5"}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    opacity: isLocked ? 1 : 0.6,
+                    transform: isLocked ? "scale(1)" : "scale(0.95)",
+                    transition: "all 0.2s ease-in-out"
+                  }}
+                >
+                  {/* Body: Tinted when locked, hollow when unlocked */}
+                  <rect
+                    x="5" y="11" width="14" height="10" rx="2" ry="2"
+                    fill="currentColor"
+                    fillOpacity={isLocked ? 0.2 : 0}
+                    style={{ transition: "fill-opacity 0.2s ease" }}
+                  ></rect>
+
+                  {/* Shackle: Lifts up an extra 2px (V5 instead of V7) when unlocked to make the gap visually obvious */}
+                  <path
+                    d={isLocked ? "M8 11V7a4 4 0 0 1 8 0v4" : "M8 11V5a4 4 0 0 1 8 0"}
+                    style={{ transition: "d 0.2s ease" }}
+                  ></path>
+
+                  {/* Keyhole */}
+                  <circle cx="12" cy="15" r="1.2" fill="currentColor" stroke="none"></circle>
+                  <path d="M11.3 15.5 L10.4 18.5 L13.6 18.5 L12.7 15.5 Z" fill="currentColor" stroke="none"></path>
+                </svg>
               </ControlButton>
             </Controls>
             <Background gap={20} size={1} color={isDarkMode ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.2)"} />
@@ -1629,11 +1664,10 @@ function VisualizerCanvas() {
         {/* Theme Toggle Button */}
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${
-            isDarkMode
-              ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-          }`}
+          className={`absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${isDarkMode
+            ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
           aria-label="Toggle Theme"
         >
           {isDarkMode ? (
@@ -1647,7 +1681,7 @@ function VisualizerCanvas() {
         <div className={`absolute top-2.5 left-2.5 right-16 z-20 flex max-h-[calc(100dvh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:max-h-[calc(100dvh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
           {/* Card Header */}
           <div className={`border-b px-4 pt-4 pb-0 transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
-            <button 
+            <button
               className={`float-right text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               style={{ transform: isSidebarOpen ? "rotate(0deg)" : "rotate(-180deg)" }}
@@ -1669,7 +1703,7 @@ function VisualizerCanvas() {
 
           {/* Card Body */}
           <div className={`overflow-y-auto p-4 transition-all sm:p-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "[&::-webkit-scrollbar-thumb]:bg-slate-600" : "[&::-webkit-scrollbar-thumb]:bg-slate-300"} ${isSidebarOpen ? "block" : "hidden"}`}>
-            
+
             <ToneBanner status={status} />
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
@@ -1719,7 +1753,7 @@ function VisualizerCanvas() {
                 </button>
               </div>
             </div>
-            
+
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
 
@@ -1729,7 +1763,7 @@ function VisualizerCanvas() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
                   className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] text-white transition hover:bg-indigo-500"
-                   onClick={() => addNode("input")}
+                  onClick={() => addNode("input")}
                 >
                   + Input
                 </button>
@@ -1755,10 +1789,10 @@ function VisualizerCanvas() {
               </div>
             </div>
             <p className={`mt-4 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Click a node to edit its properties inline.
+              Click a node to edit its properties inline.
             </p>
             <p className={`mt-1 text-[13px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Drag from the end handle of one node to another node to create an edge.
+              Drag from the end handle of one node to another node to create an edge.
             </p>
 
             <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
