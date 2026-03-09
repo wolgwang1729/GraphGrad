@@ -1143,7 +1143,7 @@ function VisualizerCanvas() {
   const fitViewConfig = useMemo(
     () => ({
       padding: FIT_VIEW_PADDING,
-      minZoom: 0.35,
+      minZoom: 0.1,
       maxZoom: 1.5,
     }),
     [],
@@ -1617,6 +1617,7 @@ function VisualizerCanvas() {
             deleteKeyCode={isLocked ? [] : ["Backspace", "Delete"]}
             proOptions={{ hideAttribution: true }}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            minZoom={0.1}
             colorMode={isDarkMode ? "dark" : "light"}
             nodesDraggable={!isLocked}
             nodesConnectable={!isLocked}
