@@ -819,14 +819,27 @@ const OperationSelect = memo(function OperationSelect({
   );
 });
 
-const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<InputEditorNode>) {
+const InputNode = memo(function InputNode({ id, data, selected, dragging }: NodeProps<InputEditorNode>) {
   const editor = useGraphEditor();
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
+  const [wasDragged, setWasDragged] = useState(false);
+
+  useEffect(() => {
+    if (dragging) setWasDragged(true);
+  }, [dragging]);
+
+  useEffect(() => {
+    if (!selected) setWasDragged(false);
+  }, [selected]);
 
   return (
-    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+    <div 
+      ref={nodeRef} 
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onClick={() => setWasDragged(false)}
+    >
+      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
@@ -879,7 +892,7 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
   );
 });
 
-const OperationNode = memo(function OperationNode({ id, data, selected }: NodeProps<OperationEditorNode>) {
+const OperationNode = memo(function OperationNode({ id, data, selected, dragging }: NodeProps<OperationEditorNode>) {
   const editor = useGraphEditor();
   const edges = useEdges();
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -888,6 +901,15 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
   const op = data.op ?? DEFAULT_OPERATION;
   const arity = getOperationArity(op);
   const mathStr = getOperationMathLabel(op, data.parameter);
+  const [wasDragged, setWasDragged] = useState(false);
+
+  useEffect(() => {
+    if (dragging) setWasDragged(true);
+  }, [dragging]);
+
+  useEffect(() => {
+    if (!selected) setWasDragged(false);
+  }, [selected]);
 
   const isConnectedA = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "a"), [edges, id]);
   const isConnectedB = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "b"), [edges, id]);
@@ -901,8 +923,12 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
   }, [arity, id, op, updateNodeInternals]);
 
   return (
-    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+    <div 
+      ref={nodeRef} 
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onClick={() => setWasDragged(false)}
+    >
+      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
@@ -987,17 +1013,30 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
   );
 });
 
-const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<OutputEditorNode>) {
+const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: NodeProps<OutputEditorNode>) {
   const editor = useGraphEditor();
   const edges = useEdges();
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
+  const [wasDragged, setWasDragged] = useState(false);
+
+  useEffect(() => {
+    if (dragging) setWasDragged(true);
+  }, [dragging]);
+
+  useEffect(() => {
+    if (!selected) setWasDragged(false);
+  }, [selected]);
 
   const isConnected = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "in"), [edges, id]);
 
   return (
-    <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <NodeToolbar isVisible={selected} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+    <div 
+      ref={nodeRef} 
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onClick={() => setWasDragged(false)}
+    >
+      <NodeToolbar isVisible={selected && !dragging && !wasDragged} position={toolbarPos} className={`nodrag nopan flex w-40 flex-col gap-2 rounded-lg border p-3 shadow-xl ${editor.isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <div className="flex flex-col gap-1">
           <label className={`text-[10px] font-bold uppercase ${editor.isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Label</label>
           <input className={`nodrag w-full rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${editor.isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`} value={data.label} onChange={(e) => editor.updateLabel(id, e.target.value)} />
