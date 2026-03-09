@@ -25,6 +25,7 @@ import {
   ReactFlowProvider,
   getViewportForBounds,
   useEdgesState,
+  useEdges,
   useNodesData,
   useNodesState,
   useReactFlow,
@@ -614,14 +615,15 @@ function getCircleStyle(isDarkMode: boolean): React.CSSProperties {
   };
 }
 
-function getTargetHandleStyle(): React.CSSProperties {
+function getTargetHandleStyle(isDarkMode: boolean, isConnected: boolean): React.CSSProperties {
   return {
     width: 8,
     height: 8,
-    opacity: 0,
-    backgroundColor: "transparent",
-    border: "none",
+    opacity: isConnected ? 0 : 1,
+    backgroundColor: isDarkMode ? "#94a3b8" : "#cbd5e1",
+    border: isDarkMode ? "1.5px solid #0f172a" : "1.5px solid #ffffff",
     boxShadow: "none",
+    transition: "opacity 0.1s ease-in-out",
   };
 }
 
@@ -878,12 +880,16 @@ const InputNode = memo(function InputNode({ id, data, selected }: NodeProps<Inpu
 
 const OperationNode = memo(function OperationNode({ id, data, selected }: NodeProps<OperationEditorNode>) {
   const editor = useGraphEditor();
+  const edges = useEdges();
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
   const updateNodeInternals = useUpdateNodeInternals();
   const op = data.op ?? DEFAULT_OPERATION;
   const arity = getOperationArity(op);
   const mathStr = getOperationMathLabel(op, data.parameter);
+
+  const isConnectedA = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "a"), [edges, id]);
+  const isConnectedB = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "b"), [edges, id]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -952,7 +958,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
           type="target"
           id="a"
           position={Position.Left}
-          style={{ ...getTargetHandleStyle(), top: "50%" }}
+          style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA), top: "50%" }}
         />
       ) : (
         <>
@@ -960,13 +966,13 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
             type="target"
             id="a"
             position={Position.Left}
-            style={{ ...getTargetHandleStyle(), top: "30%" }}
+            style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedA), top: "30%" }}
           />
           <Handle
             type="target"
             id="b"
             position={Position.Left}
-            style={{ ...getTargetHandleStyle(), top: "70%" }}
+            style={{ ...getTargetHandleStyle(editor.isDarkMode, isConnectedB), top: "70%" }}
           />
         </>
       )}
@@ -982,8 +988,11 @@ const OperationNode = memo(function OperationNode({ id, data, selected }: NodePr
 
 const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<OutputEditorNode>) {
   const editor = useGraphEditor();
+  const edges = useEdges();
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
+
+  const isConnected = useMemo(() => edges.some(e => e.target === id && e.targetHandle === "in"), [edges, id]);
 
   return (
     <div ref={nodeRef} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -1025,7 +1034,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected }: NodeProps<Ou
           type="target"
           id="in"
           position={Position.Left}
-          style={getTargetHandleStyle()}
+          style={getTargetHandleStyle(editor.isDarkMode, isConnected)}
         />
       </div>
     </div>
