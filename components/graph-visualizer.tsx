@@ -273,6 +273,10 @@ function normalizeMathSubscripts(text: string): string {
     .replace(/\b([a-z]+)(\d+)\b(?!\s*\()/g, "$1_{$2}");
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function getInputLabelSubscript(label: string): number | null {
   const match = label.trim().match(/(?:_(?:\{\s*(-?\d+)\s*\}|(-?\d+))|([A-Za-z]+)(-?\d+))$/);
   const rawValue = match?.[1] ?? match?.[2] ?? match?.[4];
@@ -1462,8 +1466,8 @@ function VisualizerCanvas() {
           fitGraphToVisibleArea(400);
         });
       });
-    } catch (err: any) {
-      setStatus({ tone: "error", text: `Error generating graph: ${err.message}` });
+    } catch (err: unknown) {
+      setStatus({ tone: "error", text: `Error generating graph: ${getErrorMessage(err)}` });
     }
   }, [equation, setNodes, setEdges, fitGraphToVisibleArea]);
 

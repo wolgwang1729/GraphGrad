@@ -206,22 +206,9 @@ export function parseEquationToGraph(
       targetHandle: "in",
     });
 
-    // Simple layout adjustment:
-    // Move all nodes so minimum X is 100, minimum Y is 100
-    // Currently, x is negative (depth is negative as we traverse back)
-    
-    // Assign calculated positions for tree layout
-    const posMap = new Map<string, {x: number, y: number}>();
-    
-    // Recalculate positions purely topologically for better layout:
-    // This is a simple fallback if the above isn't great, but let's stick to the computed x,y 
-    // Wait, the traverse above didn't save the pos to the spec. Let's do that.
-    
-    // Actually, traverse was computing X and Y but not returning it easily for the nodes.
-    // Let's rewrite the layout using standard DAG top-sort or just simple levels.
-    
-  } catch (error: any) {
-    throw new Error(`Failed to parse equation: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse equation: ${message}`);
   }
 
   // Helper for layout
