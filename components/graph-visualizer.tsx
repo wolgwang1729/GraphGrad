@@ -18,7 +18,7 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { COMPUTATION_EXAMPLES } from "@/lib/examples";
 import { parseEquationToGraph } from "@/lib/equation-parser";
@@ -72,6 +72,7 @@ type PendingDeleteTarget =
 
 function VisualizerCanvas() {
   const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow();
+  const mobileDashboardRef = useRef<HTMLDivElement | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorNode>(
     COMPUTATION_EXAMPLES[0].nodes.map(toEditorNode),
   );
@@ -107,6 +108,10 @@ function VisualizerCanvas() {
 
       const currentNodes = getNodes();
       const reservedWidth = getSidebarReservedWidth(window.innerWidth, isSidebarOpen);
+      const reservedHeight =
+        window.innerWidth < 640
+          ? Math.max(mobileDashboardRef.current?.getBoundingClientRect().height ?? 0, 72)
+          : 0;
 
       if (currentNodes.length === 0) {
         void fitView({ duration, ...fitViewConfig });
@@ -115,7 +120,7 @@ function VisualizerCanvas() {
 
       const bounds = getNodesBounds(currentNodes);
       const visibleWidth = Math.max(window.innerWidth - reservedWidth, 320);
-      const visibleHeight = Math.max(window.innerHeight - 20, 320);
+      const visibleHeight = Math.max(window.innerHeight - reservedHeight - 20, 320);
       const viewport = getViewportForBounds(
         bounds,
         visibleWidth,
@@ -144,6 +149,18 @@ function VisualizerCanvas() {
       });
     });
   }, [fitGraphToVisibleArea, isSidebarOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 640) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        fitGraphToVisibleArea(220);
+      });
+    });
+  }, [activeMobilePanel, fitGraphToVisibleArea]);
 
   useEffect(() => {
     let rafId: number | null = null;
@@ -949,7 +966,7 @@ function VisualizerCanvas() {
           )}
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 z-30 sm:hidden">
+        <div ref={mobileDashboardRef} className="absolute inset-x-0 bottom-0 z-30 sm:hidden">
           {activeMobilePanel && (
             <div className={`mx-2 mb-2 max-h-[56dvh] overflow-y-auto rounded border p-3 transition-colors duration-300 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "border-slate-800 bg-slate-950 text-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-600" : "border-slate-200 bg-slate-50 text-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-300"}`}>
               {activeMobilePanel === "graph" && (
