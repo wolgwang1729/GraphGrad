@@ -64,7 +64,7 @@ import {
   toEditorNode,
 } from "./graph-visualizer/utils";
 
-type MobilePanel = "graph" | "evaluation" | "equation" | "legend" | null;
+type MobilePanel = "graph" | "evaluation" | "equation" | "examples" | null;
 
 function VisualizerCanvas() {
   const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow();
@@ -830,27 +830,6 @@ function VisualizerCanvas() {
             <div className={`mx-2 mb-2 max-h-[56dvh] overflow-y-auto rounded border p-3 transition-colors duration-300 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "border-slate-800 bg-slate-950 text-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-600" : "border-slate-200 bg-slate-50 text-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-300"}`}>
               {activeMobilePanel === "graph" && (
                 <div>
-                  <ToneBanner status={status} />
-                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
-                  <div>
-                    <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Examples</h4>
-                    <select
-                      className={`w-full rounded border px-3 py-2 text-[15px] font-light outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
-                      value={selectedExampleId}
-                      onChange={(event) => {
-                        const next = COMPUTATION_EXAMPLES.find((e) => e.id === event.target.value);
-                        if (next) loadExample(next);
-                      }}
-                    >
-                      <option value="" disabled hidden>Custom Graph</option>
-                      {COMPUTATION_EXAMPLES.map((example) => (
-                        <option key={example.id} value={example.id}>
-                          {example.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
                   <div>
                     <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Nodes</h4>
                     <div className="grid grid-cols-3 gap-2">
@@ -921,8 +900,27 @@ function VisualizerCanvas() {
                 </div>
               )}
 
-              {activeMobilePanel === "legend" && (
+              {activeMobilePanel === "examples" && (
                 <div>
+                  <ToneBanner status={status} />
+                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Examples</h4>
+                  <select
+                    className={`w-full rounded border px-3 py-2 text-[15px] font-light outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
+                    value={selectedExampleId}
+                    onChange={(event) => {
+                      const next = COMPUTATION_EXAMPLES.find((e) => e.id === event.target.value);
+                      if (next) loadExample(next);
+                    }}
+                  >
+                    <option value="" disabled hidden>Custom Graph</option>
+                    {COMPUTATION_EXAMPLES.map((example) => (
+                      <option key={example.id} value={example.id}>
+                        {example.title}
+                      </option>
+                    ))}
+                  </select>
+                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
                   <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Legend</h4>
                   <div className={`space-y-2 text-sm ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
                     <div className="flex items-center gap-3">
@@ -941,10 +939,10 @@ function VisualizerCanvas() {
 
           <div className={`mx-2 mb-2 grid grid-cols-4 rounded border p-1 transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
             {[
+              { id: "examples" as const, label: "Examples" },
               { id: "graph" as const, label: "Graph" },
               { id: "evaluation" as const, label: "Evaluation" },
               { id: "equation" as const, label: "Equation" },
-              { id: "legend" as const, label: "Legend" },
             ].map((item) => {
               const isActive = activeMobilePanel === item.id;
 
