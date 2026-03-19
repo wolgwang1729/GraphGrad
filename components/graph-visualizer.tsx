@@ -769,7 +769,13 @@ const OperationSelect = memo(function OperationSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className="relative"
+      onWheelCapture={(event) => {
+        event.stopPropagation();
+      }}
+    >
       <button
         type="button"
         className={`nodrag cursor-pointer flex w-full items-center justify-between rounded border px-2 py-1 text-xs outline-none focus:border-indigo-500 ${isDarkMode ? "border-slate-700 bg-slate-950 text-slate-100" : "border-slate-200 bg-slate-50 text-slate-900"}`}
@@ -791,7 +797,14 @@ const OperationSelect = memo(function OperationSelect({
 
       {isOpen && (
         <div
-          className={`absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 rounded border shadow-xl ${isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+          className={`absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-48 overflow-y-auto overscroll-contain rounded border shadow-xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode
+            ? "border-slate-700 bg-slate-900 [&::-webkit-scrollbar-track]:bg-slate-900 [&::-webkit-scrollbar-thumb]:bg-slate-700 hover:[&::-webkit-scrollbar-thumb]:bg-slate-600"
+            : "border-slate-200 bg-white [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+            }`}
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: isDarkMode ? "#475569 #0f172a" : "#cbd5e1 #f1f5f9",
+          }}
           role="listbox"
           aria-label="Operation"
         >
