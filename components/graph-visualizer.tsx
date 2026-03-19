@@ -266,9 +266,16 @@ function getSidebarReservedWidth(windowWidth: number, isSidebarOpen: boolean): n
   return SIDEBAR_RESERVED_WIDTH_PX;
 }
 
+function normalizeMathSubscripts(text: string): string {
+  return text
+    .replace(/_(\-?\d+)\b/g, "_{$1}")
+    .replace(/_\{\s*(\-?\d+)\s*\}/g, "_{$1}")
+    .replace(/\b([a-z]+)(\d+)\b(?!\s*\()/g, "$1_{$2}");
+}
+
 function getInputLabelSubscript(label: string): number | null {
-  const match = label.trim().match(/_(?:\{\s*(-?\d+)\s*\}|(-?\d+))$/);
-  const rawValue = match?.[1] ?? match?.[2];
+  const match = label.trim().match(/(?:_(?:\{\s*(-?\d+)\s*\}|(-?\d+))|([A-Za-z]+)(-?\d+))$/);
+  const rawValue = match?.[1] ?? match?.[2] ?? match?.[4];
 
   if (!rawValue) {
     return null;
@@ -894,7 +901,7 @@ const InputNode = memo(function InputNode({ id, data, selected, dragging }: Node
             whiteSpace: "nowrap",
           }}
         >
-          <InlineMath math={data.label} />
+          <InlineMath math={normalizeMathSubscripts(data.label)} />
         </div>
         <span style={{ fontSize: 11 }}>●</span>
         <Handle
@@ -1004,7 +1011,7 @@ const OperationNode = memo(function OperationNode({ id, data, selected, dragging
             whiteSpace: "nowrap",
           }}
         >
-          <InlineMath math={data.label} />
+          <InlineMath math={normalizeMathSubscripts(data.label)} />
         </div>
         <span style={(op === "relu" || op === "tanh" || op === "exp" || op === "max" || op === "log") ? { fontSize: 11 } : undefined}><InlineMath math={mathStr} /></span>
         {arity === 1 ? (
@@ -1112,7 +1119,7 @@ const OutputNode = memo(function OutputNode({ id, data, selected, dragging }: No
             whiteSpace: "nowrap",
           }}
         >
-          <InlineMath math={data.label} />
+          <InlineMath math={normalizeMathSubscripts(data.label)} />
         </div>
         <span style={{ fontSize: 9 }}>●</span>
         <Handle
@@ -1383,7 +1390,7 @@ function VisualizerCanvas() {
       setEdges(result.edges.map(toEditorEdge));
       // Format equation for display: convert 'relu' to '\operatorname{ReLU}' etc.
       // Use the canonical labels from our operation map for consistency.
-      let displayEq = equation;
+      let displayEq = normalizeMathSubscripts(equation);
 
       // We want to replace any user-typed function name with its canonical LaTeX.
       // We can use a combination of known aliases and SupportedOperations.

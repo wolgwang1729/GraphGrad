@@ -27,6 +27,10 @@ const OPERATION_MAP: Record<string, SupportedOperation> = {
   tanh: "tanh",
 };
 
+function normalizeVariableSubscripts(equation: string): string {
+  return equation.replace(/\b([a-z]+)(\d+)\b(?!\s*\()/g, "$1_$2");
+}
+
 export function parseEquationToGraph(
   equation: string
 ): { nodes: GraphNodeSpec[]; edges: GraphEdgeSpec[] } {
@@ -41,7 +45,9 @@ export function parseEquationToGraph(
     .replace(/−/g, "-")
     .replace(/÷/g, "/");
 
-  const node = math.parse(sanitizedEquation);
+  const normalizedEquation = normalizeVariableSubscripts(sanitizedEquation);
+
+  const node = math.parse(normalizedEquation);
 
   const inputNodesMap = new Map<string, string>(); // symName/val -> nodeId
 

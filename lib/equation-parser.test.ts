@@ -22,6 +22,26 @@ describe("parseEquationToGraph", () => {
     expect(edges).toContainEqual(expect.objectContaining({ source: opAdd?.id, target: output?.id }));
   });
 
+  it("should normalize plain trailing digits to subscripts: x2 + y2", () => {
+    const { nodes } = parseEquationToGraph("x2 + y2");
+
+    const inputX2 = nodes.find((n) => n.kind === "input" && n.label === "x_2") as InputNodeSpec;
+    const inputY2 = nodes.find((n) => n.kind === "input" && n.label === "y_2") as InputNodeSpec;
+
+    expect(inputX2).toBeDefined();
+    expect(inputY2).toBeDefined();
+  });
+
+  it("should normalize lowercase multi-digit suffixes to subscripts: x23 + y24", () => {
+    const { nodes } = parseEquationToGraph("x23 + y24");
+
+    const inputX23 = nodes.find((n) => n.kind === "input" && n.label === "x_23") as InputNodeSpec;
+    const inputY24 = nodes.find((n) => n.kind === "input" && n.label === "y_24") as InputNodeSpec;
+
+    expect(inputX23).toBeDefined();
+    expect(inputY24).toBeDefined();
+  });
+
   it("should parse a simple multiplication: 2 * x", () => {
     const { nodes } = parseEquationToGraph("2 * x");
     const inputConst = nodes.find(n => n.label === "2") as InputNodeSpec;
