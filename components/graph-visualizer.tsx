@@ -1217,6 +1217,32 @@ function VisualizerCanvas() {
     });
   }, [fitGraphToVisibleArea, isSidebarOpen]);
 
+  useEffect(() => {
+    let rafId: number | null = null;
+
+    const handleResize = () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        fitGraphToVisibleArea(120);
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, [fitGraphToVisibleArea]);
+
   const resetComputedState = useCallback(
     (nextStatus = DEFAULT_STATUS) => {
       setNodes((current) => current.map(resetNodeMetrics));
