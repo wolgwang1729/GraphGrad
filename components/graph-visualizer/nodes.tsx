@@ -89,20 +89,13 @@ const SmartNumberInput = memo(function SmartNumberInput({
   className: string;
 }) {
   const [localText, setLocalText] = useState(value.toString());
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    let parsedLocal: number;
-    if (localText.includes("/")) {
-      const parts = localText.split("/");
-      parsedLocal = Number(parts[0]) / (parts[1] !== "" ? Number(parts[1]) : 1);
-    } else {
-      parsedLocal = Number(localText);
-    }
-
-    if (parsedLocal !== value) {
+    if (!isFocused) {
       setLocalText(value.toString());
     }
-  }, [localText, value]);
+  }, [isFocused, value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
@@ -136,8 +129,10 @@ const SmartNumberInput = memo(function SmartNumberInput({
     <input
       className={className}
       value={localText}
+      onFocus={() => setIsFocused(true)}
       onChange={handleChange}
       onBlur={() => {
+        setIsFocused(false);
         let num: number;
         if (localText.includes("/")) {
           const parts = localText.split("/");
