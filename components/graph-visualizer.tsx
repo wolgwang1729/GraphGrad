@@ -64,6 +64,8 @@ import {
   toEditorNode,
 } from "./graph-visualizer/utils";
 
+type MobilePanel = "graph" | "evaluation" | "equation" | "legend" | null;
+
 function VisualizerCanvas() {
   const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorNode>(
@@ -81,6 +83,7 @@ function VisualizerCanvas() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
+  const [activeMobilePanel, setActiveMobilePanel] = useState<MobilePanel>(null);
 
   const fitViewConfig = useMemo(
     () => ({
@@ -162,6 +165,19 @@ function VisualizerCanvas() {
       window.removeEventListener("orientationchange", handleResize);
     };
   }, [fitGraphToVisibleArea]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 640) {
+        setActiveMobilePanel(null);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const resetComputedState = useCallback(
     (nextStatus = DEFAULT_STATUS) => {
@@ -587,7 +603,7 @@ function VisualizerCanvas() {
             className="h-full w-full"
           >
             <EdgeMarkers />
-            <Controls position="bottom-right" showFitView={false} showInteractive={false} className="bottom-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]! sm:bottom-4!">
+            <Controls position="bottom-right" showFitView={false} showInteractive={false} className="bottom-[calc(env(safe-area-inset-bottom,0px)+4.75rem)]! sm:bottom-4!">
               <ControlButton onClick={() => fitGraphToVisibleArea(250)} title="Fit to screen" aria-label="Fit graph to screen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 3 21 3 21 9"></polyline>
@@ -640,9 +656,30 @@ function VisualizerCanvas() {
           </ReactFlow>
         </main>
 
+        <div className={`absolute top-2.5 left-2.5 right-2.5 z-30 flex items-center justify-between rounded border px-3 py-2 transition-colors duration-300 sm:hidden ${isDarkMode ? "border-slate-800 bg-slate-950 text-white" : "border-slate-200 bg-slate-50 text-slate-800"}`}>
+          <div className="flex flex-col">
+            <h1 className="text-[1.6rem] leading-none font-thin tracking-wide">GraphGrad</h1>
+            <p className={`text-xs font-light ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>Computation Graph Visualizer</p>
+          </div>
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border transition-colors ${isDarkMode
+              ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            aria-label="Toggle Theme"
+          >
+            {isDarkMode ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            )}
+          </button>
+        </div>
+
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`absolute top-3 right-3 z-30 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 ${isDarkMode
+          className={`absolute top-3 right-3 z-30 hidden h-10 w-10 cursor-pointer items-center justify-center rounded-full border shadow-lg transition-colors sm:top-4 sm:right-5 sm:flex ${isDarkMode
             ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
             : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
@@ -655,7 +692,7 @@ function VisualizerCanvas() {
           )}
         </button>
 
-        <div className={`absolute top-2.5 left-2.5 right-16 z-20 flex max-h-[calc(100dvh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:max-h-[calc(100dvh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
+        <div className={`absolute top-2.5 left-2.5 right-16 z-20 hidden max-h-[calc(100dvh-20px)] w-auto min-w-64 max-w-[20rem] flex-col rounded border transition-colors duration-300 sm:right-auto sm:flex sm:max-h-[calc(100dvh-60px)] sm:w-88 sm:max-w-none lg:w-102.5 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
           <div className={`border-b px-4 pt-4 pb-0 transition-colors duration-300 sm:px-5 ${isDarkMode ? "border-slate-800 bg-slate-900/80 text-white" : "border-slate-200 bg-slate-100/50 text-slate-800 rounded-t"}`}>
             <button
               className={`float-right cursor-pointer text-2xl transition-transform ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-900"}`}
@@ -786,6 +823,147 @@ function VisualizerCanvas() {
               <span>. Built with ♥</span>
             </div>
           )}
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 z-30 sm:hidden">
+          {activeMobilePanel && (
+            <div className={`mx-2 mb-2 max-h-[56dvh] overflow-y-auto rounded border p-3 transition-colors duration-300 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ${isDarkMode ? "border-slate-800 bg-slate-950 text-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-600" : "border-slate-200 bg-slate-50 text-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-300"}`}>
+              {activeMobilePanel === "graph" && (
+                <div>
+                  <ToneBanner status={status} />
+                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  <div>
+                    <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Examples</h4>
+                    <select
+                      className={`w-full rounded border px-3 py-2 text-[15px] font-light outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
+                      value={selectedExampleId}
+                      onChange={(event) => {
+                        const next = COMPUTATION_EXAMPLES.find((e) => e.id === event.target.value);
+                        if (next) loadExample(next);
+                      }}
+                    >
+                      <option value="" disabled hidden>Custom Graph</option>
+                      {COMPUTATION_EXAMPLES.map((example) => (
+                        <option key={example.id} value={example.id}>
+                          {example.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  <div>
+                    <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Nodes</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button className="rounded-sm bg-indigo-600 px-2 py-1.5 text-sm cursor-pointer text-white transition hover:bg-indigo-500" onClick={() => addNode("input")}>+ Input</button>
+                      <button className="rounded-sm bg-indigo-600 px-2 py-1.5 text-sm cursor-pointer text-white transition hover:bg-indigo-500" onClick={() => addNode("operation")}>+ Op</button>
+                      <button
+                        className="rounded-sm bg-indigo-600 px-2 py-1.5 text-sm cursor-pointer text-white transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => addNode("output")}
+                        disabled={hasOutputNode}
+                        aria-label={hasOutputNode ? "There can be only one out node" : "Add an output node"}
+                      >
+                        + Out
+                      </button>
+                    </div>
+                  </div>
+                  <hr className={`my-3 ${isDarkMode ? "border-slate-700" : "border-slate-200"}`} />
+                  <button className={`w-full rounded-sm border px-3 py-2 text-sm cursor-pointer transition bg-transparent ${isDarkMode
+                    ? "border-red-500/30 text-red-400/80 hover:bg-red-500 hover:text-white hover:border-red-500"
+                    : "border-red-200 text-red-600/80 hover:bg-red-500 hover:text-white hover:border-red-500"
+                    }`} onClick={() => clearCanvas()}>Clear Canvas</button>
+                </div>
+              )}
+
+              {activeMobilePanel === "evaluation" && (
+                <div>
+                  <h4 className={`mb-2 text-[15px] font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Evaluation</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
+                      onClick={() => runEvaluation("forward")}
+                    >
+                      Forward
+                    </button>
+                    <button
+                      className="rounded-sm bg-indigo-600 px-3 py-1.5 text-[15px] cursor-pointer text-white transition hover:bg-indigo-500"
+                      onClick={() => runEvaluation("backward")}
+                    >
+                      Backprop
+                    </button>
+                    <button
+                      className={`col-span-2 rounded-sm border px-3 py-1.5 text-[15px] cursor-pointer transition bg-transparent ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-red-500 hover:text-red-500" : "border-slate-300 text-slate-600 hover:border-red-500 hover:text-red-500"}`}
+                      onClick={() => resetComputedState()}
+                    >
+                      Clear Values
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeMobilePanel === "equation" && (
+                <div>
+                  <h4 className={`mb-3 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Equation to Graph</h4>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. x + y * 2"
+                      className={`w-full rounded border px-3 py-2 text-sm font-mono outline-none ${isDarkMode ? "border-slate-600 bg-slate-900 text-slate-100 focus:border-indigo-500" : "border-slate-300 bg-slate-50 text-slate-900 focus:border-indigo-500 focus:bg-white"}`}
+                      value={equation}
+                      onChange={(e) => setEquation(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleGenerateEquation();
+                        }
+                      }}
+                    />
+                    <button className="w-full rounded-sm bg-indigo-600 px-3 py-2 text-sm cursor-pointer font-medium text-white transition hover:bg-indigo-500" onClick={handleGenerateEquation}>Generate Graph</button>
+                  </div>
+                </div>
+              )}
+
+              {activeMobilePanel === "legend" && (
+                <div>
+                  <h4 className={`mb-2 text-base font-light ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Legend</h4>
+                  <div className={`space-y-2 text-sm ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-block h-3 w-6 rounded-sm bg-[#22c55e]" />
+                      <span>Forward value (above edge)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-block h-3 w-6 rounded-sm bg-[#ef4444]" />
+                      <span>Gradient (below edge)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className={`mx-2 mb-2 grid grid-cols-4 rounded border p-1 transition-colors duration-300 ${isDarkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-50"}`}>
+            {[
+              { id: "graph" as const, label: "Graph" },
+              { id: "evaluation" as const, label: "Evaluation" },
+              { id: "equation" as const, label: "Equation" },
+              { id: "legend" as const, label: "Legend" },
+            ].map((item) => {
+              const isActive = activeMobilePanel === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveMobilePanel(isActive ? null : item.id)}
+                  className={`rounded px-2 py-2 text-xs font-light transition-colors ${isActive
+                    ? "bg-indigo-600 text-white"
+                    : isDarkMode
+                      ? "text-slate-300 hover:bg-slate-800"
+                      : "text-slate-700 hover:bg-slate-200"
+                    }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </GraphEditorContext.Provider>

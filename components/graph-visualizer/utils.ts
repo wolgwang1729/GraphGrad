@@ -5,10 +5,6 @@ import {
   DEFAULT_OPERATION,
   EDGE_BASE_STYLE,
   MOBILE_BREAKPOINT_PX,
-  MOBILE_SIDEBAR_LEFT_OFFSET_PX,
-  MOBILE_SIDEBAR_MAX_WIDTH_PX,
-  MOBILE_SIDEBAR_MIN_WIDTH_PX,
-  MOBILE_SIDEBAR_RIGHT_GAP_PX,
   OPERATION_MATH_LABELS,
   SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX,
   SIDEBAR_RESERVED_WIDTH_PX,
@@ -80,15 +76,7 @@ export function getSidebarReservedWidth(windowWidth: number, isSidebarOpen: bool
   }
 
   if (windowWidth < MOBILE_BREAKPOINT_PX) {
-    const sidebarWidth = Math.max(
-      Math.min(
-        windowWidth - MOBILE_SIDEBAR_LEFT_OFFSET_PX - MOBILE_SIDEBAR_RIGHT_GAP_PX,
-        MOBILE_SIDEBAR_MAX_WIDTH_PX,
-      ),
-      Math.min(MOBILE_SIDEBAR_MIN_WIDTH_PX, windowWidth - 32),
-    );
-
-    return Math.min(sidebarWidth + MOBILE_SIDEBAR_LEFT_OFFSET_PX, windowWidth - 16);
+    return SIDEBAR_COLLAPSED_RESERVED_WIDTH_PX;
   }
 
   return SIDEBAR_RESERVED_WIDTH_PX;
