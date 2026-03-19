@@ -35,8 +35,8 @@ export type EditorContextValue = {
   updateValue: (nodeId: string, value: number) => void;
   updateOperation: (nodeId: string, op: SupportedOperation) => void;
   updateParameter: (nodeId: string, parameter: number) => void;
-  deleteNode: (nodeId: string) => void;
-  deleteEdge: (edgeId: string) => void;
+  requestDeleteNode: (nodeId: string) => void;
+  requestDeleteEdge: (edgeId: string) => void;
   showError: (message: string) => void;
 };
 

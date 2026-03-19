@@ -33,12 +33,7 @@ function LabeledEdge({
   const sourceNodeData = useNodesData<EditorNode>(source);
   const longPressHandlers = useTouchLongPress({
     enabled: !editor.isLocked,
-    onLongPress: () => {
-      const shouldDelete = window.confirm("Delete this edge?");
-      if (shouldDelete) {
-        editor.deleteEdge(id);
-      }
-    },
+    onLongPress: () => editor.requestDeleteEdge(id),
   });
   const strokeColor =
     typeof style?.stroke === "string" ? style.stroke : EDGE_BASE_STYLE.stroke;

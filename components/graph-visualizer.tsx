@@ -65,6 +65,10 @@ import {
 } from "./graph-visualizer/utils";
 
 type MobilePanel = "graph" | "evaluation" | "equation" | "examples" | null;
+type PendingDeleteTarget =
+  | { kind: "node"; id: string }
+  | { kind: "edge"; id: string }
+  | null;
 
 function VisualizerCanvas() {
   const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow();
@@ -84,6 +88,7 @@ function VisualizerCanvas() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [activeMobilePanel, setActiveMobilePanel] = useState<MobilePanel>(null);
+  const [pendingDeleteTarget, setPendingDeleteTarget] = useState<PendingDeleteTarget>(null);
 
   const fitViewConfig = useMemo(
     () => ({
@@ -350,6 +355,46 @@ function VisualizerCanvas() {
     [isLocked, setEdges, setNodes],
   );
 
+  const requestDeleteNode = useCallback(
+    (nodeId: string) => {
+      if (isLocked) {
+        return;
+      }
+
+      setPendingDeleteTarget({ kind: "node", id: nodeId });
+    },
+    [isLocked],
+  );
+
+  const requestDeleteEdge = useCallback(
+    (edgeId: string) => {
+      if (isLocked) {
+        return;
+      }
+
+      setPendingDeleteTarget({ kind: "edge", id: edgeId });
+    },
+    [isLocked],
+  );
+
+  const cancelPendingDelete = useCallback(() => {
+    setPendingDeleteTarget(null);
+  }, []);
+
+  const confirmPendingDelete = useCallback(() => {
+    if (!pendingDeleteTarget) {
+      return;
+    }
+
+    if (pendingDeleteTarget.kind === "node") {
+      deleteNode(pendingDeleteTarget.id);
+    } else {
+      deleteEdge(pendingDeleteTarget.id);
+    }
+
+    setPendingDeleteTarget(null);
+  }, [deleteEdge, deleteNode, pendingDeleteTarget]);
+
   const editorContextValue = useMemo<EditorContextValue>(
     () => ({
       isDarkMode,
@@ -358,15 +403,15 @@ function VisualizerCanvas() {
       updateValue,
       updateOperation,
       updateParameter,
-      deleteNode,
-      deleteEdge,
+      requestDeleteNode,
+      requestDeleteEdge,
       showError,
     }),
     [
-      deleteEdge,
-      deleteNode,
       isDarkMode,
       isLocked,
+      requestDeleteEdge,
+      requestDeleteNode,
       showError,
       updateLabel,
       updateOperation,
@@ -705,6 +750,35 @@ function VisualizerCanvas() {
             <Background gap={20} size={1} color={isDarkMode ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.2)"} />
           </ReactFlow>
         </main>
+
+        {pendingDeleteTarget && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+            <div className={`w-full max-w-xs rounded-lg border p-4 shadow-xl ${isDarkMode ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}>
+              <h2 id="delete-dialog-title" className="text-sm font-medium">
+                Delete this {pendingDeleteTarget.kind}?
+              </h2>
+              <p className={`mt-2 text-xs ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                This action cannot be undone.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={cancelPendingDelete}
+                  className={`rounded-sm border px-3 py-1.5 text-xs cursor-pointer transition ${isDarkMode ? "border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200"}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmPendingDelete}
+                  className="rounded-sm bg-indigo-600 px-3 py-1.5 text-xs cursor-pointer text-white transition hover:bg-indigo-500"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={`absolute top-2.5 left-2.5 right-2.5 z-30 flex items-center justify-between rounded border px-3 py-2 transition-colors duration-300 sm:hidden ${isDarkMode ? "border-slate-800 bg-slate-950 text-white" : "border-slate-200 bg-slate-50 text-slate-800"}`}>
           <div className="flex flex-col">

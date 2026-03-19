@@ -285,12 +285,7 @@ const InputNode = memo(function InputNode({
   const [wasDragged, setWasDragged] = useState(false);
   const longPressHandlers = useTouchLongPress({
     enabled: !editor.isLocked,
-    onLongPress: () => {
-      const shouldDelete = window.confirm("Delete this node?");
-      if (shouldDelete) {
-        editor.deleteNode(id);
-      }
-    },
+    onLongPress: () => editor.requestDeleteNode(id),
   });
 
   useEffect(() => {
@@ -391,12 +386,7 @@ const OperationNode = memo(function OperationNode({
   const [wasDragged, setWasDragged] = useState(false);
   const longPressHandlers = useTouchLongPress({
     enabled: !editor.isLocked,
-    onLongPress: () => {
-      const shouldDelete = window.confirm("Delete this node?");
-      if (shouldDelete) {
-        editor.deleteNode(id);
-      }
-    },
+    onLongPress: () => editor.requestDeleteNode(id),
   });
 
   useEffect(() => {
@@ -549,12 +539,7 @@ const OutputNode = memo(function OutputNode({
   const [wasDragged, setWasDragged] = useState(false);
   const longPressHandlers = useTouchLongPress({
     enabled: !editor.isLocked,
-    onLongPress: () => {
-      const shouldDelete = window.confirm("Delete this node?");
-      if (shouldDelete) {
-        editor.deleteNode(id);
-      }
-    },
+    onLongPress: () => editor.requestDeleteNode(id),
   });
 
   useEffect(() => {
