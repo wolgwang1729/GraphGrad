@@ -312,6 +312,44 @@ function VisualizerCanvas() {
     setStatus({ tone: "error", text: message });
   }, []);
 
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      if (isLocked) {
+        return;
+      }
+
+      setNodes((current) => current.filter((node) => node.id !== nodeId).map(resetNodeMetrics));
+      setEdges((current) =>
+        current
+          .filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+          .map((edge) => decorateEdge(edge)),
+      );
+      setSelectedExampleId("");
+      setStatus({
+        tone: "info",
+        text: "Node deleted. Long-press a node or edge on mobile to remove it.",
+      });
+    },
+    [isLocked, setEdges, setNodes],
+  );
+
+  const deleteEdge = useCallback(
+    (edgeId: string) => {
+      if (isLocked) {
+        return;
+      }
+
+      setEdges((current) => current.filter((edge) => edge.id !== edgeId).map((edge) => decorateEdge(edge)));
+      setNodes((current) => current.map(resetNodeMetrics));
+      setSelectedExampleId("");
+      setStatus({
+        tone: "info",
+        text: "Edge deleted. Long-press a node or edge on mobile to remove it.",
+      });
+    },
+    [isLocked, setEdges, setNodes],
+  );
+
   const editorContextValue = useMemo<EditorContextValue>(
     () => ({
       isDarkMode,
@@ -320,9 +358,21 @@ function VisualizerCanvas() {
       updateValue,
       updateOperation,
       updateParameter,
+      deleteNode,
+      deleteEdge,
       showError,
     }),
-    [isDarkMode, isLocked, updateLabel, updateOperation, updateParameter, updateValue, showError],
+    [
+      deleteEdge,
+      deleteNode,
+      isDarkMode,
+      isLocked,
+      showError,
+      updateLabel,
+      updateOperation,
+      updateParameter,
+      updateValue,
+    ],
   );
 
   const loadExample = useCallback(

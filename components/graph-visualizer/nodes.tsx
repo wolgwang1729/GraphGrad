@@ -14,7 +14,7 @@ import { getOperationArity, OPERATION_LABELS, type SupportedOperation } from "@/
 
 import { DEFAULT_OPERATION } from "./constants";
 import { useGraphEditor } from "./context";
-import { useToolbarPosition } from "./hooks";
+import { useToolbarPosition, useTouchLongPress } from "./hooks";
 import type {
   InputEditorNode,
   OperationEditorNode,
@@ -283,6 +283,15 @@ const InputNode = memo(function InputNode({
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
   const [wasDragged, setWasDragged] = useState(false);
+  const longPressHandlers = useTouchLongPress({
+    enabled: !editor.isLocked,
+    onLongPress: () => {
+      const shouldDelete = window.confirm("Delete this node?");
+      if (shouldDelete) {
+        editor.deleteNode(id);
+      }
+    },
+  });
 
   useEffect(() => {
     if (dragging) setWasDragged(true);
@@ -296,6 +305,11 @@ const InputNode = memo(function InputNode({
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onPointerDown={longPressHandlers.onPointerDown}
+      onPointerMove={longPressHandlers.onPointerMove}
+      onPointerUp={longPressHandlers.onPointerUp}
+      onPointerCancel={longPressHandlers.onPointerCancel}
+      onPointerLeave={longPressHandlers.onPointerLeave}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);
@@ -375,6 +389,15 @@ const OperationNode = memo(function OperationNode({
   const arity = getOperationArity(op);
   const mathStr = getOperationMathLabel(op, data.parameter);
   const [wasDragged, setWasDragged] = useState(false);
+  const longPressHandlers = useTouchLongPress({
+    enabled: !editor.isLocked,
+    onLongPress: () => {
+      const shouldDelete = window.confirm("Delete this node?");
+      if (shouldDelete) {
+        editor.deleteNode(id);
+      }
+    },
+  });
 
   useEffect(() => {
     if (dragging) setWasDragged(true);
@@ -405,6 +428,11 @@ const OperationNode = memo(function OperationNode({
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onPointerDown={longPressHandlers.onPointerDown}
+      onPointerMove={longPressHandlers.onPointerMove}
+      onPointerUp={longPressHandlers.onPointerUp}
+      onPointerCancel={longPressHandlers.onPointerCancel}
+      onPointerLeave={longPressHandlers.onPointerLeave}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);
@@ -519,6 +547,15 @@ const OutputNode = memo(function OutputNode({
   const nodeRef = useRef<HTMLDivElement>(null);
   const toolbarPos = useToolbarPosition(nodeRef);
   const [wasDragged, setWasDragged] = useState(false);
+  const longPressHandlers = useTouchLongPress({
+    enabled: !editor.isLocked,
+    onLongPress: () => {
+      const shouldDelete = window.confirm("Delete this node?");
+      if (shouldDelete) {
+        editor.deleteNode(id);
+      }
+    },
+  });
 
   useEffect(() => {
     if (dragging) setWasDragged(true);
@@ -537,6 +574,11 @@ const OutputNode = memo(function OutputNode({
     <div
       ref={nodeRef}
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      onPointerDown={longPressHandlers.onPointerDown}
+      onPointerMove={longPressHandlers.onPointerMove}
+      onPointerUp={longPressHandlers.onPointerUp}
+      onPointerCancel={longPressHandlers.onPointerCancel}
+      onPointerLeave={longPressHandlers.onPointerLeave}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);

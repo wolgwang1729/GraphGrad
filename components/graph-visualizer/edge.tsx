@@ -13,6 +13,8 @@ import {
   EDGE_TARGET_GAP_PX,
   STRAIGHT_EDGE_TARGET_GAP_PX,
 } from "./constants";
+import { useGraphEditor } from "./context";
+import { useTouchLongPress } from "./hooks";
 import type { EditorNode, LabeledEdgeData } from "./types";
 import { formatNumber } from "./utils";
 
@@ -27,7 +29,17 @@ function LabeledEdge({
   data,
   style,
 }: EdgeProps<Edge<LabeledEdgeData>>) {
+  const editor = useGraphEditor();
   const sourceNodeData = useNodesData<EditorNode>(source);
+  const longPressHandlers = useTouchLongPress({
+    enabled: !editor.isLocked,
+    onLongPress: () => {
+      const shouldDelete = window.confirm("Delete this edge?");
+      if (shouldDelete) {
+        editor.deleteEdge(id);
+      }
+    },
+  });
   const strokeColor =
     typeof style?.stroke === "string" ? style.stroke : EDGE_BASE_STYLE.stroke;
   const markerEnd =
@@ -82,6 +94,18 @@ function LabeledEdge({
   return (
     <>
       <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} />
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={22}
+        style={{ pointerEvents: "stroke" }}
+        onPointerDown={longPressHandlers.onPointerDown}
+        onPointerMove={longPressHandlers.onPointerMove}
+        onPointerUp={longPressHandlers.onPointerUp}
+        onPointerCancel={longPressHandlers.onPointerCancel}
+        onPointerLeave={longPressHandlers.onPointerLeave}
+      />
       {hasLabels && (
         <EdgeLabelRenderer>
           {forwardText && (
