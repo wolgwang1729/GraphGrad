@@ -100,6 +100,10 @@ function LabeledEdge({
         onPointerUp={longPressHandlers.onPointerUp}
         onPointerCancel={longPressHandlers.onPointerCancel}
         onPointerLeave={longPressHandlers.onPointerLeave}
+        onTouchStart={longPressHandlers.onTouchStart}
+        onTouchMove={longPressHandlers.onTouchMove}
+        onTouchEnd={longPressHandlers.onTouchEnd}
+        onTouchCancel={longPressHandlers.onTouchCancel}
       />
       {hasLabels && (
         <EdgeLabelRenderer>

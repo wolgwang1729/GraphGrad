@@ -305,6 +305,10 @@ const InputNode = memo(function InputNode({
       onPointerUp={longPressHandlers.onPointerUp}
       onPointerCancel={longPressHandlers.onPointerCancel}
       onPointerLeave={longPressHandlers.onPointerLeave}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchMove={longPressHandlers.onTouchMove}
+      onTouchEnd={longPressHandlers.onTouchEnd}
+      onTouchCancel={longPressHandlers.onTouchCancel}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);
@@ -423,6 +427,10 @@ const OperationNode = memo(function OperationNode({
       onPointerUp={longPressHandlers.onPointerUp}
       onPointerCancel={longPressHandlers.onPointerCancel}
       onPointerLeave={longPressHandlers.onPointerLeave}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchMove={longPressHandlers.onTouchMove}
+      onTouchEnd={longPressHandlers.onTouchEnd}
+      onTouchCancel={longPressHandlers.onTouchCancel}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);
@@ -564,6 +572,10 @@ const OutputNode = memo(function OutputNode({
       onPointerUp={longPressHandlers.onPointerUp}
       onPointerCancel={longPressHandlers.onPointerCancel}
       onPointerLeave={longPressHandlers.onPointerLeave}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchMove={longPressHandlers.onTouchMove}
+      onTouchEnd={longPressHandlers.onTouchEnd}
+      onTouchCancel={longPressHandlers.onTouchCancel}
       onClick={() => {
         if (selected) {
           setWasDragged(!wasDragged);

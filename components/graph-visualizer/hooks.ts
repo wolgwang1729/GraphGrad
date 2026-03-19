@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type TouchEvent } from "react";
 import { Position } from "@xyflow/react";
 
 import { TOOLBAR_THRESHOLD_PX } from "./constants";
+
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 
 export function useToolbarPosition(nodeRef: React.RefObject<HTMLDivElement | null>): Position {
   const [pos, setPos] = useState<Position>(Position.Top);
@@ -56,6 +58,10 @@ type LongPressHandlers = {
   onPointerUp: () => void;
   onPointerCancel: () => void;
   onPointerLeave: () => void;
+  onTouchStart: (event: TouchEvent<Element>) => void;
+  onTouchMove: (event: TouchEvent<Element>) => void;
+  onTouchEnd: () => void;
+  onTouchCancel: () => void;
 };
 
 export function useTouchLongPress({
@@ -65,6 +71,8 @@ export function useTouchLongPress({
 }: LongPressOptions): LongPressHandlers {
   const timerRef = useRef<number | null>(null);
   const pointerIdRef = useRef<number | null>(null);
+  const sourceRef = useRef<"pointer" | "touch" | null>(null);
+  const startPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   const clearPressTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -73,34 +81,95 @@ export function useTouchLongPress({
     }
 
     pointerIdRef.current = null;
+    sourceRef.current = null;
+    startPositionRef.current = null;
+  }, []);
+
+  const startLongPress = useCallback(
+    (x: number, y: number, source: "pointer" | "touch") => {
+      clearPressTimer();
+      sourceRef.current = source;
+      startPositionRef.current = { x, y };
+      timerRef.current = window.setTimeout(() => {
+        clearPressTimer();
+        onLongPress();
+      }, durationMs);
+    },
+    [clearPressTimer, durationMs, onLongPress],
+  );
+
+  const shouldCancelForMove = useCallback((x: number, y: number) => {
+    const start = startPositionRef.current;
+    if (!start) {
+      return false;
+    }
+
+    const deltaX = x - start.x;
+    const deltaY = y - start.y;
+    return Math.hypot(deltaX, deltaY) > LONG_PRESS_MOVE_TOLERANCE_PX;
   }, []);
 
   const onPointerDown = useCallback(
     (event: PointerEvent<Element>) => {
-      if (!enabled || event.pointerType !== "touch") {
+      if (!enabled) {
         return;
       }
 
-      clearPressTimer();
+      if (event.pointerType === "mouse") {
+        return;
+      }
+
+      if (sourceRef.current === "touch") {
+        return;
+      }
+
       pointerIdRef.current = event.pointerId;
-      timerRef.current = window.setTimeout(() => {
-        timerRef.current = null;
-        pointerIdRef.current = null;
-        onLongPress();
-      }, durationMs);
+      startLongPress(event.clientX, event.clientY, "pointer");
     },
-    [clearPressTimer, durationMs, enabled, onLongPress],
+    [enabled, startLongPress],
   );
 
   const onPointerMove = useCallback(
     (event: PointerEvent<Element>) => {
+      if (sourceRef.current !== "pointer") {
+        return;
+      }
+
       if (event.pointerId !== pointerIdRef.current) {
         return;
       }
 
-      clearPressTimer();
+      if (shouldCancelForMove(event.clientX, event.clientY)) {
+        clearPressTimer();
+      }
     },
-    [clearPressTimer],
+    [clearPressTimer, shouldCancelForMove],
+  );
+
+  const onTouchStart = useCallback(
+    (event: TouchEvent<Element>) => {
+      if (!enabled || event.touches.length === 0) {
+        return;
+      }
+
+      const firstTouch = event.touches[0];
+      startLongPress(firstTouch.clientX, firstTouch.clientY, "touch");
+    },
+    [enabled, startLongPress],
+  );
+
+  const onTouchMove = useCallback(
+    (event: TouchEvent<Element>) => {
+      if (sourceRef.current !== "touch" || event.touches.length === 0) {
+        return;
+      }
+
+      const firstTouch = event.touches[0];
+      if (shouldCancelForMove(firstTouch.clientX, firstTouch.clientY)) {
+        clearPressTimer();
+      }
+    },
+    [clearPressTimer, shouldCancelForMove],
   );
 
   useEffect(() => clearPressTimer, [clearPressTimer]);
@@ -111,5 +180,9 @@ export function useTouchLongPress({
     onPointerUp: clearPressTimer,
     onPointerCancel: clearPressTimer,
     onPointerLeave: clearPressTimer,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd: clearPressTimer,
+    onTouchCancel: clearPressTimer,
   };
 }
